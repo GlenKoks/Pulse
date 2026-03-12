@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ActivityIndicator } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar,
 } from 'react-native';
+import type { ScrollView as ScrollViewType } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useNewsDataContext } from '../hooks/NewsDataContext';
 import { useTheme } from '../hooks/ThemeContext';
@@ -27,35 +28,13 @@ export function DashboardScreen() {
   } = useNewsDataContext();
 
   const [insightsVisible, setInsightsVisible] = useState(false);
-  const { exportPdf, loading: pdfLoading } = usePdfExport();
+  const scrollRef = useRef<ScrollViewType>(null);
+  const { exportScreenAsPdf, loading: pdfLoading } = usePdfExport();
 
   const handleExportPdf = () => {
-    const topTopics = topicStats.slice(0, 5).map(t => ({ label: t.topic, value: `${t.count} публ.` }));
-    const topPersons = personStats.slice(0, 5).map(p => ({ label: p.name, value: `${formatNumber(p.totalShows)} охват` }));
-    const topLocations = locationStats.slice(0, 5).map(l => ({ label: l.name, value: `${formatNumber(l.totalShows)} охват` }));
-    const topGeo = geoStats.slice(0, 5).map(g => ({ label: g.name, value: `${g.count} упом.` }));
-    const periodLabel = filters.dateRange === 2 ? '2 дня' : filters.dateRange === 7 ? '7 дней' : filters.dateRange === 30 ? '30 дней' : 'Все время';
-    exportPdf({
-      title: 'Дашборд — Аналитика новостей',
-      subtitle: `Период: ${periodLabel} · ${filteredData.length} публикаций · Охват: ${formatNumber(totalShows)}`,
-      sections: [
-        {
-          heading: 'Ключевые показатели',
-          rows: [
-            { label: 'Публикации', value: String(filteredData.length) },
-            { label: 'Суммарный охват', value: formatNumber(totalShows) },
-            { label: 'Период', value: periodLabel },
-            ...(filters.selectedTopic ? [{ label: 'Фильтр по тематике', value: filters.selectedTopic }] : []),
-            ...(filters.selectedGeo ? [{ label: 'Фильтр по стране', value: filters.selectedGeo }] : []),
-          ],
-        },
-        { heading: 'Топ тематик', rows: topTopics },
-        { heading: 'Топ персон по охвату', rows: topPersons },
-        { heading: 'Топ локаций по охвату', rows: topLocations },
-        { heading: 'Топ стран по упоминаниям', rows: topGeo },
-      ],
-    });
+    exportScreenAsPdf(scrollRef, 'Дашборд — Аналитика новостей');
   };
+
 
   const hasActiveFilters =
     filters.dateRange !== null ||
@@ -115,6 +94,7 @@ export function DashboardScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
         showsVerticalScrollIndicator={false}

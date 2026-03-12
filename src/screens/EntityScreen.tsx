@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import type { ScrollView as ScrollViewType } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useNewsDataContext } from '../hooks/NewsDataContext';
 import { useTheme } from '../hooks/ThemeContext';
@@ -52,7 +53,8 @@ export function EntityScreen() {
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [insightsVisible, setInsightsVisible] = useState(false);
-  const { exportPdf, loading: pdfLoading } = usePdfExport();
+  const scrollRef = useRef<ScrollViewType>(null);
+  const { exportScreenAsPdf, loading: pdfLoading } = usePdfExport();
 
   // Сначала фильтруем по сущности, потом по дате
   const entityData = useMemo(
@@ -82,46 +84,8 @@ export function EntityScreen() {
     ? Math.round((negativeCount / filteredData.length) * 100)
     : 0;
 
-  const periodLabel = filters.dateRange === 2
-    ? '2 дня'
-    : filters.dateRange === 7
-    ? '7 дней'
-    : filters.dateRange === 30
-    ? '30 дней'
-    : 'Все время';
-
   const handleExportPdf = () => {
-    const topNews = filteredData
-      .sort((a, b) => (b.shows || 0) - (a.shows || 0))
-      .slice(0, 5)
-      .map(n => ({ label: n.title.slice(0, 60) + (n.title.length > 60 ? '...' : ''), value: formatNumber(n.shows || 0) }));
-
-    exportPdf({
-      title: `${ENTITY_LABEL[type] ?? type}: ${name}`,
-      subtitle: `Период: ${periodLabel} · ${filteredData.length} публикаций · Охват: ${formatNumber(totalShows)}`,
-      sections: [
-        {
-          heading: 'Ключевые показатели',
-          rows: [
-            { label: 'Публикации с упоминанием', value: String(filteredData.length) },
-            { label: 'Суммарный охват', value: formatNumber(totalShows) },
-            { label: 'Доля негативных публикаций', value: `${negativePercent}%` },
-            { label: 'Период', value: periodLabel },
-          ],
-        },
-        {
-          heading: 'Негативные тематики',
-          rows: negativeRadarData.labels.map((label, i) => ({
-            label,
-            value: `${negativeRadarData.values[i]}% (${negativeRadarData.counts[i]} публ.)`,
-          })),
-        },
-        {
-          heading: 'Топ-5 новостей по охвату',
-          rows: topNews,
-        },
-      ],
-    });
+    exportScreenAsPdf(scrollRef, `${ENTITY_LABEL[type] ?? type}: ${name}`);
   };
 
   return (
@@ -176,6 +140,7 @@ export function EntityScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
         showsVerticalScrollIndicator={false}
