@@ -30,6 +30,7 @@ export interface TopicStats {
 export interface PersonStats {
   name: string;
   count: number;
+  totalShows: number;
 }
 
 export interface PublisherStats {
@@ -47,4 +48,14 @@ export interface Filters {
   topics: string[];
   publishers: string[];
   persons: string[];
+  dateRange: 2 | 7 | 30 | null;
+  selectedTopic: string | null;
+}
+
+export type EntityType = 'persons' | 'locations' | 'companies';
+
+export interface EntityStats {
+  name: string;
+  count: number;
+  totalShows: number;
 }

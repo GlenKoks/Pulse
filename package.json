@@ -30,7 +30,9 @@
     "react-native-screens": "^4.24.0",
     "react-native-svg": "^15.15.3",
     "react-native-web": "^0.21.0",
-    "victory-native": "^37.3.6"
+    "victory-native": "^37.3.6",
+    "@react-navigation/native-stack": "^7.1.33",
+    "expo-clipboard": "^7.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
