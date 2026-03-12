@@ -10,6 +10,7 @@ import {
   getPublisherStats,
   getBadVerdictStats,
   getWordCloud,
+  getGeoStats,
   applyFilters,
 } from '../utils/dataProcessing';
 
@@ -19,6 +20,7 @@ const DEFAULT_FILTERS: Filters = {
   persons: [],
   dateRange: null,
   selectedTopic: null,
+  selectedGeo: null,
 };
 
 interface NewsDataContextType {
@@ -36,6 +38,7 @@ interface NewsDataContextType {
   publisherStats: ReturnType<typeof getPublisherStats>;
   badVerdictStats: ReturnType<typeof getBadVerdictStats>;
   wordCloud: ReturnType<typeof getWordCloud>;
+  geoStats: ReturnType<typeof getGeoStats>;
   totalShows: number;
   totalLikes: number;
   totalComments: number;
@@ -63,6 +66,9 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
     publisherStats: getPublisherStats(filteredData),
     badVerdictStats: getBadVerdictStats(filteredData),
     wordCloud: getWordCloud(filteredData),
+    // geoStats считается по ВСЕМ данным (без geo-фильтра) чтобы карта всегда
+    // показывала полную тепловую картину, а не схлопывалась при выборе страны
+    geoStats: getGeoStats(MOCK_DATA),
     totalShows: filteredData.reduce((sum, item) => sum + (item.shows || 0), 0),
     totalLikes: filteredData.reduce((sum, item) => sum + parseInt(item.likes || '0', 10), 0),
     totalComments: filteredData.reduce((sum, item) => sum + parseInt(item.comments || '0', 10), 0),

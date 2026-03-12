@@ -79,6 +79,32 @@ const HEADLINES = [
   'Google обновил алгоритмы поиска',
 ];
 
+// Страны с ISO-кодами и весами (вероятность попадания в geo)
+// Россия доминирует, т.к. это российские СМИ
+// ВАЖНО: коды в UPPERCASE — так их принимает react-native-simple-worldmap
+export const GEO_COUNTRIES: { code: string; name: string; weight: number }[] = [
+  { code: 'RU', name: 'Россия',            weight: 0.70 },
+  { code: 'US', name: 'США',               weight: 0.35 },
+  { code: 'CN', name: 'Китай',             weight: 0.25 },
+  { code: 'DE', name: 'Германия',          weight: 0.18 },
+  { code: 'GB', name: 'Великобритания',    weight: 0.15 },
+  { code: 'FR', name: 'Франция',           weight: 0.12 },
+  { code: 'UA', name: 'Украина',           weight: 0.20 },
+  { code: 'TR', name: 'Турция',            weight: 0.10 },
+  { code: 'IN', name: 'Индия',             weight: 0.08 },
+  { code: 'JP', name: 'Япония',            weight: 0.08 },
+  { code: 'SA', name: 'Саудовская Аравия', weight: 0.07 },
+  { code: 'BR', name: 'Бразилия',          weight: 0.06 },
+  { code: 'KZ', name: 'Казахстан',         weight: 0.10 },
+  { code: 'BY', name: 'Беларусь',          weight: 0.10 },
+  { code: 'IL', name: 'Израиль',           weight: 0.08 },
+];
+
+// Словарь code → name для быстрого поиска
+export const GEO_CODE_TO_NAME: Record<string, string> = Object.fromEntries(
+  GEO_COUNTRIES.map(c => [c.code, c.name])
+);
+
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -113,9 +139,20 @@ export function generateMockData(count: number = 500): NewsItem[] {
     if (Math.random() < 0.20) negativeVerdicts.push('Конфликт');
     if (Math.random() < 0.15) negativeVerdicts.push('Насилие');
     if (Math.random() < 0.10) negativeVerdicts.push('Жестокость');
+
     const persons = Math.random() > 0.4 ? randomSubset(PERSONS, 1, 3) : [];
     const companies = Math.random() > 0.5 ? randomSubset(COMPANIES, 1, 3) : [];
     const locations = Math.random() > 0.5 ? randomSubset(LOCATIONS, 1, 3) : [];
+
+    // Поле geo: 1–3 страны, выбранных с учётом весов
+    const geoCodes: string[] = [];
+    for (const c of GEO_COUNTRIES) {
+      if (Math.random() < c.weight) geoCodes.push(c.code);
+    }
+    // Гарантируем хотя бы одну страну
+    if (geoCodes.length === 0) geoCodes.push('ru');
+    // Ограничиваем 3 странами
+    const geoSlice = geoCodes.slice(0, 3);
 
     items.push({
       ndx: i + 1,
@@ -132,6 +169,7 @@ export function generateMockData(count: number = 500): NewsItem[] {
       organizations: companies.length > 0 ? companies.join(', ') : null,
       locations: locations.length > 0 ? locations.join(', ') : null,
       country: 'Россия',
+      geo: geoSlice.join(', '),
     });
   }
 

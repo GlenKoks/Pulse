@@ -11,6 +11,7 @@ import { WordCloud } from '../components/WordCloud';
 import { EntityRanking } from '../components/EntityRanking';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
+import WorldMapCard from '../components/WorldMapCard';
 import { formatNumber } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
 
@@ -20,7 +21,7 @@ export function DashboardScreen() {
   const {
     filteredData, filters, setFilters, resetFilters,
     dailyStats, topicStats, personStats, locationStats, companyStats,
-    wordCloud, totalShows,
+    wordCloud, totalShows, geoStats,
   } = useNewsDataContext();
 
   const [insightsVisible, setInsightsVisible] = useState(false);
@@ -28,10 +29,15 @@ export function DashboardScreen() {
   const hasActiveFilters =
     filters.dateRange !== null ||
     filters.selectedTopic !== null ||
+    filters.selectedGeo !== null ||
     filters.topics.length > 0;
 
   const handleTopicSelect = (topic: string | null) => {
     setFilters({ ...filters, selectedTopic: topic });
+  };
+
+  const handleGeoSelect = (code: string | null) => {
+    setFilters({ ...filters, selectedGeo: code });
   };
 
   const handleEntityPress = (type: 'persons' | 'locations' | 'companies', name: string) => {
@@ -85,10 +91,21 @@ export function DashboardScreen() {
                 style={[styles.resetBtn, { backgroundColor: colors.error + '22', borderColor: colors.error + '66' }]}
                 onPress={resetFilters}
               >
-                <Text style={[styles.resetText, { color: colors.error }]}>Сбросить</Text>
+                <Text style={[styles.resetText, { color: colors.error }]}>Сбросить все</Text>
               </TouchableOpacity>
             )}
           </View>
+          {/* Активный гео-фильтр */}
+          {filters.selectedGeo && (
+            <View style={[styles.geoFilterBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '44' }]}>
+              <Text style={[styles.geoFilterText, { color: colors.primary }]}>
+                🌍 Фильтр по стране: {filters.selectedGeo.toUpperCase()}
+              </Text>
+              <TouchableOpacity onPress={() => handleGeoSelect(null)}>
+                <Text style={[styles.geoFilterClose, { color: colors.primary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Stat cards */}
@@ -122,6 +139,13 @@ export function DashboardScreen() {
             selectedTopic={filters.selectedTopic}
           />
         </View>
+
+        {/* World Map */}
+        <WorldMapCard
+          geoStats={geoStats}
+          selectedGeo={filters.selectedGeo}
+          onSelectGeo={handleGeoSelect}
+        />
 
         {/* Word cloud */}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -173,6 +197,18 @@ const styles = StyleSheet.create({
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', marginTop: Spacing.xs },
   resetBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.xl, borderWidth: 1 },
   resetText: { fontSize: 12, fontWeight: '600' },
+  geoFilterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  geoFilterText: { fontSize: 13, fontWeight: '600' },
+  geoFilterClose: { fontSize: 16, fontWeight: '700', paddingLeft: 8 },
   statsRow: { flexDirection: 'row', gap: Spacing.sm },
   statCard: { flex: 1, borderRadius: BorderRadius.md, padding: Spacing.md, borderWidth: 1, borderLeftWidth: 3 },
   statLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },

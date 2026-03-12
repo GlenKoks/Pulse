@@ -1,4 +1,5 @@
-import { NewsItem, DailyStats, TopicStats, PersonStats, PublisherStats, WordFrequency, Filters, EntityStats } from '../types';
+import { NewsItem, DailyStats, TopicStats, PersonStats, PublisherStats, WordFrequency, Filters, EntityStats, GeoStats } from '../types';
+import { GEO_CODE_TO_NAME } from '../data/mockData';
 
 export function parseList(value: string | null): string[] {
   if (!value || value === '[]' || value === 'None' || value === 'null') return [];
@@ -32,6 +33,10 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
     if (filters.selectedTopic) {
       const itemTopics = parseList(item.topics_verdicts_list);
       if (!itemTopics.includes(filters.selectedTopic)) return false;
+    }
+    if (filters.selectedGeo) {
+      const itemGeo = parseList(item.geo);
+      if (!itemGeo.includes(filters.selectedGeo)) return false;
     }
     if (filters.topics.length > 0) {
       const itemTopics = parseList(item.topics_verdicts_list);
@@ -221,6 +226,25 @@ export function getNegativeTopicRadarData(
     counts: absoluteCounts,  // абсолютные числа для легенды
     total,
   };
+}
+
+export function getGeoStats(data: NewsItem[]): GeoStats[] {
+  const map = new Map<string, { count: number; totalShows: number }>();
+  for (const item of data) {
+    for (const code of parseList(item.geo)) {
+      const c = code.trim().toUpperCase();
+      if (!c) continue;
+      const e = map.get(c) || { count: 0, totalShows: 0 };
+      map.set(c, { count: e.count + 1, totalShows: e.totalShows + (item.shows || 0) });
+    }
+  }
+  return Array.from(map.entries())
+    .map(([code, stats]) => ({
+      code,
+      name: GEO_CODE_TO_NAME[code] || code.toUpperCase(),
+      ...stats,
+    }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export function formatNumber(n: number): string {

@@ -13,6 +13,7 @@ export interface NewsItem {
   organizations: string | null;
   locations: string | null;
   country: string | null;
+  geo: string | null; // ISO 3166-1 alpha-2 коды через запятую, напр. "ru, us, cn"
 }
 
 export interface DailyStats {
@@ -44,12 +45,20 @@ export interface WordFrequency {
   value: number;
 }
 
+export interface GeoStats {
+  code: string;   // ISO 3166-1 alpha-2, напр. "ru"
+  name: string;   // Название страны на русском
+  count: number;
+  totalShows: number;
+}
+
 export interface Filters {
   topics: string[];
   publishers: string[];
   persons: string[];
   dateRange: 2 | 7 | 30 | null;
   selectedTopic: string | null;
+  selectedGeo: string | null; // ISO 3166-1 alpha-2 код страны для фильтра
 }
 
 export type EntityType = 'persons' | 'locations' | 'companies';
