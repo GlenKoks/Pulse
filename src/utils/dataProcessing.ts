@@ -196,6 +196,24 @@ export function getWordCloud(data: NewsItem[]): WordFrequency[] {
     .slice(0, 80);
 }
 
+export function getNegativeTopicRadarData(
+  data: NewsItem[],
+  negativeTopics: readonly string[] = ['Желтуха', 'Конфликт', 'Насилие', 'Жестокость']
+): { labels: string[]; values: number[]; maxValue: number } {
+  const counts: Record<string, number> = {};
+  for (const topic of negativeTopics) counts[topic] = 0;
+  for (const item of data) {
+    if (!item.bad_verdicts_list) continue;
+    for (const verdict of item.bad_verdicts_list.split(',')) {
+      const v = verdict.trim();
+      if (v in counts) counts[v]++;
+    }
+  }
+  const values = negativeTopics.map(t => counts[t] || 0);
+  const maxValue = Math.max(...values, 1);
+  return { labels: [...negativeTopics], values, maxValue };
+}
+
 export function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;

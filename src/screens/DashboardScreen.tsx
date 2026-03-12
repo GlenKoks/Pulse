@@ -11,7 +11,8 @@ import { WordCloud } from '../components/WordCloud';
 import { EntityRanking } from '../components/EntityRanking';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
-import { formatNumber } from '../utils/dataProcessing';
+import NegativeRadarChart from '../components/NegativeRadarChart';
+import { formatNumber, getNegativeTopicRadarData } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
 
 export function DashboardScreen() {
@@ -24,6 +25,11 @@ export function DashboardScreen() {
   } = useNewsDataContext();
 
   const [insightsVisible, setInsightsVisible] = useState(false);
+
+  const negativeRadarData = React.useMemo(
+    () => getNegativeTopicRadarData(filteredData),
+    [filteredData]
+  );
 
   const hasActiveFilters =
     filters.dateRange !== null ||
@@ -62,7 +68,7 @@ export function DashboardScreen() {
             style={[styles.insightsBtn, { backgroundColor: colors.primary }]}
             onPress={() => setInsightsVisible(true)}
           >
-            <Text style={styles.insightsBtnText}>\u2726 Выводы</Text>
+            <Text style={styles.insightsBtnText}>✦ Выводы</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -120,6 +126,19 @@ export function DashboardScreen() {
             data={topicStats}
             onTopicSelect={handleTopicSelect}
             selectedTopic={filters.selectedTopic}
+          />
+        </View>
+
+        {/* Negative topics Radar Chart */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Негативные тематики</Text>
+          <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+            Распределение по типам негатива
+          </Text>
+          <NegativeRadarChart
+            labels={negativeRadarData.labels}
+            values={negativeRadarData.values}
+            maxValue={negativeRadarData.maxValue}
           />
         </View>
 

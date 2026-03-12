@@ -10,8 +10,10 @@ import { WordCloud } from '../components/WordCloud';
 import { NewsTopList } from '../components/NewsTopList';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
+import NegativeRadarChart from '../components/NegativeRadarChart';
 import {
   filterByEntity, getDailyStats, getWordCloud, applyFilters, formatNumber,
+  getNegativeTopicRadarData,
 } from '../utils/dataProcessing';
 import { Filters } from '../types';
 import { Spacing, BorderRadius } from '../utils/theme';
@@ -61,9 +63,19 @@ export function EntityScreen() {
 
   const dailyStats = useMemo(() => getDailyStats(filteredData), [filteredData]);
   const wordCloud = useMemo(() => getWordCloud(filteredData), [filteredData]);
+  const negativeRadarData = useMemo(
+    () => getNegativeTopicRadarData(filteredData),
+    [filteredData]
+  );
   const totalShows = filteredData.reduce((s, item) => s + (item.shows || 0), 0);
 
   const hasActiveFilters = filters.dateRange !== null;
+
+  // Считаем долю публикаций с хотя бы одной негативной тематикой
+  const negativeCount = filteredData.filter(item => item.bad_verdicts_list && item.bad_verdicts_list.length > 0).length;
+  const negativePercent = filteredData.length > 0
+    ? Math.round((negativeCount / filteredData.length) * 100)
+    : 0;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -142,6 +154,11 @@ export function EntityScreen() {
             <Text style={[styles.statValue, { color: colors.accent }]}>{formatNumber(totalShows)}</Text>
             <Text style={[styles.statSub, { color: colors.textMuted }]}>суммарный</Text>
           </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.error }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>НЕГАТИВ</Text>
+            <Text style={[styles.statValue, { color: colors.error }]}>{negativePercent}%</Text>
+            <Text style={[styles.statSub, { color: colors.textMuted }]}>публикаций</Text>
+          </View>
         </View>
 
         {/* Line chart */}
@@ -151,6 +168,28 @@ export function EntityScreen() {
             По дням · упоминания «{name}»
           </Text>
           <MetricLineChart data={dailyStats} />
+        </View>
+
+        {/* Negative topics Radar Chart */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Негативные тематики</Text>
+              <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+                Распределение по типам негатива · «{name}»
+              </Text>
+            </View>
+            {negativeCount > 0 && (
+              <View style={[styles.negBadge, { backgroundColor: colors.error + '22', borderColor: colors.error + '55' }]}>
+                <Text style={[styles.negBadgeText, { color: colors.error }]}>{negativeCount} публ.</Text>
+              </View>
+            )}
+          </View>
+          <NegativeRadarChart
+            labels={negativeRadarData.labels}
+            values={negativeRadarData.values}
+            maxValue={negativeRadarData.maxValue}
+          />
         </View>
 
         {/* Word cloud */}
@@ -273,7 +312,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 4,
   },
-  statValue: { fontSize: 24, fontWeight: '700' },
+  statValue: { fontSize: 22, fontWeight: '700' },
   statSub: { fontSize: 10, marginTop: 2 },
   card: {
     borderRadius: BorderRadius.lg,
@@ -281,6 +320,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 4,
   },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xs,
+  },
   cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardSub: { fontSize: 12, marginBottom: Spacing.sm },
+  negBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+  },
+  negBadgeText: { fontSize: 11, fontWeight: '700' },
 });

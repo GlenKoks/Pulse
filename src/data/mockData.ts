@@ -5,7 +5,9 @@ const TOPICS = [
   'Здоровье', 'Наука', 'Общество', 'Бизнес', 'Международные отношения',
 ];
 
-const VERDICTS = ['Желтуха', 'Политика', 'Агрессия', 'Кликбейт', 'Манипуляция', 'Дезинформация'];
+// Четыре негативные тематики для RadarChart
+export const NEGATIVE_TOPICS = ['Желтуха', 'Конфликт', 'Насилие', 'Жестокость'] as const;
+export type NegativeTopic = typeof NEGATIVE_TOPICS[number];
 
 const PERSONS = [
   'Илон Маск', 'Владимир Путин', 'Дональд Трамп', 'Джо Байден', 'Тим Кук',
@@ -105,7 +107,12 @@ export function generateMockData(count: number = 500): NewsItem[] {
     date.setDate(date.getDate() - daysAgo);
 
     const topics = randomSubset(TOPICS, 1, 3);
-    const verdicts = Math.random() > 0.6 ? randomSubset(VERDICTS, 1, 2) : [];
+    // Негативные тематики: каждая назначается независимо с разной вероятностью
+    const negativeVerdicts: string[] = [];
+    if (Math.random() < 0.25) negativeVerdicts.push('Желтуха');
+    if (Math.random() < 0.20) negativeVerdicts.push('Конфликт');
+    if (Math.random() < 0.15) negativeVerdicts.push('Насилие');
+    if (Math.random() < 0.10) negativeVerdicts.push('Жестокость');
     const persons = Math.random() > 0.4 ? randomSubset(PERSONS, 1, 3) : [];
     const companies = Math.random() > 0.5 ? randomSubset(COMPANIES, 1, 3) : [];
     const locations = Math.random() > 0.5 ? randomSubset(LOCATIONS, 1, 3) : [];
@@ -120,7 +127,7 @@ export function generateMockData(count: number = 500): NewsItem[] {
       likes: String(randomInt(0, 5000)),
       comments: String(randomInt(0, 1000)),
       topics_verdicts_list: topics.join(', '),
-      bad_verdicts_list: verdicts.length > 0 ? verdicts.join(', ') : null,
+      bad_verdicts_list: negativeVerdicts.length > 0 ? negativeVerdicts.join(', ') : null,
       persons: persons.length > 0 ? persons.join(', ') : null,
       organizations: companies.length > 0 ? companies.join(', ') : null,
       locations: locations.length > 0 ? locations.join(', ') : null,
