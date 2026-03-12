@@ -188,7 +188,8 @@ export function EntityScreen() {
           <NegativeRadarChart
             labels={negativeRadarData.labels}
             values={negativeRadarData.values}
-            maxValue={negativeRadarData.maxValue}
+            counts={negativeRadarData.counts}
+            total={negativeRadarData.total}
           />
         </View>
 

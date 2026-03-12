@@ -6,61 +6,71 @@ import { Spacing } from '../utils/theme';
 
 interface NegativeRadarChartProps {
   labels: string[];
+  /** Значения в процентах (0–100) от общего числа публикаций */
   values: number[];
-  maxValue: number;
+  /** Абсолютные числа публикаций для каждого тега */
+  counts: number[];
+  /** Общее число публикаций сущности */
+  total: number;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-// Цвета для негативных тематик
 const TOPIC_COLORS = ['#FF6B35', '#FF4B8B', '#FFD93D', '#F44336'];
-const TOPIC_LABELS: Record<string, string> = {
-  'Желтуха': 'Желтуха',
-  'Конфликт': 'Конфликт',
-  'Насилие': 'Насилие',
-  'Жестокость': 'Жестокость',
-};
 
-export default function NegativeRadarChart({ labels, values, maxValue }: NegativeRadarChartProps) {
-  const { colors } = useTheme();
+export default function NegativeRadarChart({
+  labels,
+  values,
+  counts,
+  total,
+}: NegativeRadarChartProps) {
+  const { colors, mode } = useTheme();
 
-  // Размер диаграммы — адаптивный
   const chartSize = Math.min(SCREEN_WIDTH - Spacing.md * 4, 280);
 
-  // Нормализуем значения к maxValue для RadarChart
-  const normalizedValues = values.map(v => (maxValue > 0 ? Math.round((v / maxValue) * 100) : 0));
+  // Передаём проценты напрямую (0–100), maxValue=100
+  const hasData = values.some(v => v > 0);
+
+  if (!hasData) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          Нет публикаций с негативными тематиками
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.chartWrapper}>
         <RadarChart
-          data={normalizedValues}
+          data={values}
           labels={labels}
           maxValue={100}
           noOfSections={4}
           chartSize={chartSize}
           isAnimated
-          animationDuration={800}
+          animationDuration={600}
           labelConfig={{
-            fontSize: 11,
+            fontSize: 12,
             stroke: colors.textSecondary,
             fontWeight: '600',
           }}
           gridConfig={{
             stroke: colors.border,
             strokeWidth: 1,
-            fill: colors.surface,
-            opacity: 0.8,
+            fill: mode === 'dark' ? '#1a1a2e' : '#f0f0f8',
+            opacity: 1,
           }}
           polygonConfig={{
             stroke: '#FF4B8B',
-            strokeWidth: 2,
+            strokeWidth: 2.5,
             fill: '#FF4B8B',
-            opacity: 0.25,
+            opacity: 0.3,
             gradientColor: '#FF6B35',
             showGradient: true,
             isAnimated: true,
-            animationDuration: 800,
+            animationDuration: 600,
           }}
           asterLinesConfig={{
             stroke: colors.border,
@@ -69,20 +79,40 @@ export default function NegativeRadarChart({ labels, values, maxValue }: Negativ
         />
       </View>
 
-      {/* Легенда с абсолютными значениями */}
+      {/* Легенда: название + % + абсолютное число */}
       <View style={styles.legend}>
         {labels.map((label, i) => (
-          <View key={label} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: TOPIC_COLORS[i % TOPIC_COLORS.length] }]} />
+          <View
+            key={label}
+            style={[
+              styles.legendItem,
+              { backgroundColor: colors.surfaceLight, borderColor: colors.border },
+            ]}
+          >
+            <View
+              style={[
+                styles.legendDot,
+                { backgroundColor: TOPIC_COLORS[i % TOPIC_COLORS.length] },
+              ]}
+            />
             <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>
-              {TOPIC_LABELS[label] || label}
+              {label}
             </Text>
-            <Text style={[styles.legendValue, { color: colors.text }]}>
-              {values[i]}
-            </Text>
+            <View style={styles.legendNumbers}>
+              <Text style={[styles.legendPercent, { color: TOPIC_COLORS[i % TOPIC_COLORS.length] }]}>
+                {values[i]}%
+              </Text>
+              <Text style={[styles.legendCount, { color: colors.textMuted }]}>
+                {counts[i]} публ.
+              </Text>
+            </View>
           </View>
         ))}
       </View>
+
+      <Text style={[styles.totalNote, { color: colors.textMuted }]}>
+        Всего публикаций с упоминанием: {total}
+      </Text>
     </View>
   );
 }
@@ -91,6 +121,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     gap: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   chartWrapper: {
     alignItems: 'center',
@@ -98,30 +129,49 @@ const styles = StyleSheet.create({
   },
   legend: {
     width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    justifyContent: 'center',
+    gap: Spacing.xs,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    minWidth: 120,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   legendDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
+    flexShrink: 0,
   },
   legendLabel: {
-    fontSize: 12,
-    flex: 1,
-  },
-  legendValue: {
     fontSize: 13,
+    flex: 1,
+    fontWeight: '500',
+  },
+  legendNumbers: {
+    alignItems: 'flex-end',
+    gap: 1,
+  },
+  legendPercent: {
+    fontSize: 15,
     fontWeight: '700',
-    minWidth: 28,
-    textAlign: 'right',
+  },
+  legendCount: {
+    fontSize: 11,
+  },
+  totalNote: {
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 13,
+    textAlign: 'center',
   },
 });

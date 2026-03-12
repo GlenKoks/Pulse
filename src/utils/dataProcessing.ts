@@ -199,19 +199,28 @@ export function getWordCloud(data: NewsItem[]): WordFrequency[] {
 export function getNegativeTopicRadarData(
   data: NewsItem[],
   negativeTopics: readonly string[] = ['Желтуха', 'Конфликт', 'Насилие', 'Жестокость']
-): { labels: string[]; values: number[]; maxValue: number } {
-  const counts: Record<string, number> = {};
-  for (const topic of negativeTopics) counts[topic] = 0;
+): { labels: string[]; values: number[]; counts: number[]; total: number } {
+  const countMap: Record<string, number> = {};
+  for (const topic of negativeTopics) countMap[topic] = 0;
+  const total = data.length;
   for (const item of data) {
     if (!item.bad_verdicts_list) continue;
     for (const verdict of item.bad_verdicts_list.split(',')) {
       const v = verdict.trim();
-      if (v in counts) counts[v]++;
+      if (v in countMap) countMap[v]++;
     }
   }
-  const values = negativeTopics.map(t => counts[t] || 0);
-  const maxValue = Math.max(...values, 1);
-  return { labels: [...negativeTopics], values, maxValue };
+  // Значения в процентах (0–100) от общего числа публикаций сущности
+  const absoluteCounts = negativeTopics.map(t => countMap[t] || 0);
+  const percentValues = absoluteCounts.map(c =>
+    total > 0 ? Math.round((c / total) * 100) : 0
+  );
+  return {
+    labels: [...negativeTopics],
+    values: percentValues,   // проценты для RadarChart (0–100)
+    counts: absoluteCounts,  // абсолютные числа для легенды
+    total,
+  };
 }
 
 export function formatNumber(n: number): string {
