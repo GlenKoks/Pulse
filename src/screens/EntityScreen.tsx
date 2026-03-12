@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useNewsDataContext } from '../hooks/NewsDataContext';
@@ -11,12 +12,14 @@ import { NewsTopList } from '../components/NewsTopList';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
 import NegativeRadarChart from '../components/NegativeRadarChart';
+import { WikipediaCard } from '../components/WikipediaCard';
 import {
   filterByEntity, getDailyStats, getWordCloud, applyFilters, formatNumber,
   getNegativeTopicRadarData,
 } from '../utils/dataProcessing';
 import { Filters } from '../types';
 import { Spacing, BorderRadius } from '../utils/theme';
+import { usePdfExport } from '../hooks/usePdfExport';
 
 type RouteParams = {
   Entity: {
@@ -49,8 +52,9 @@ export function EntityScreen() {
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [insightsVisible, setInsightsVisible] = useState(false);
+  const { exportPdf, loading: pdfLoading } = usePdfExport();
 
-  // First filter by entity, then apply date/other filters
+  // Сначала фильтруем по сущности, потом по дате
   const entityData = useMemo(
     () => filterByEntity(allData, type, name),
     [allData, type, name]
@@ -71,11 +75,54 @@ export function EntityScreen() {
 
   const hasActiveFilters = filters.dateRange !== null;
 
-  // Считаем долю публикаций с хотя бы одной негативной тематикой
-  const negativeCount = filteredData.filter(item => item.bad_verdicts_list && item.bad_verdicts_list.length > 0).length;
+  const negativeCount = filteredData.filter(
+    item => item.bad_verdicts_list && item.bad_verdicts_list.length > 0
+  ).length;
   const negativePercent = filteredData.length > 0
     ? Math.round((negativeCount / filteredData.length) * 100)
     : 0;
+
+  const periodLabel = filters.dateRange === 2
+    ? '2 дня'
+    : filters.dateRange === 7
+    ? '7 дней'
+    : filters.dateRange === 30
+    ? '30 дней'
+    : 'Все время';
+
+  const handleExportPdf = () => {
+    const topNews = filteredData
+      .sort((a, b) => (b.shows || 0) - (a.shows || 0))
+      .slice(0, 5)
+      .map(n => ({ label: n.title.slice(0, 60) + (n.title.length > 60 ? '...' : ''), value: formatNumber(n.shows || 0) }));
+
+    exportPdf({
+      title: `${ENTITY_LABEL[type] ?? type}: ${name}`,
+      subtitle: `Период: ${periodLabel} · ${filteredData.length} публикаций · Охват: ${formatNumber(totalShows)}`,
+      sections: [
+        {
+          heading: 'Ключевые показатели',
+          rows: [
+            { label: 'Публикации с упоминанием', value: String(filteredData.length) },
+            { label: 'Суммарный охват', value: formatNumber(totalShows) },
+            { label: 'Доля негативных публикаций', value: `${negativePercent}%` },
+            { label: 'Период', value: periodLabel },
+          ],
+        },
+        {
+          heading: 'Негативные тематики',
+          rows: negativeRadarData.labels.map((label, i) => ({
+            label,
+            value: `${negativeRadarData.values[i]}% (${negativeRadarData.counts[i]} публ.)`,
+          })),
+        },
+        {
+          heading: 'Топ-5 новостей по охвату',
+          rows: topNews,
+        },
+      ],
+    });
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -93,7 +140,7 @@ export function EntityScreen() {
           >
             <Text style={[styles.backIcon, { color: colors.text }]}>‹</Text>
           </TouchableOpacity>
-          <View>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.entityType, { color: colors.textMuted }]}>
               {ENTITY_LABEL[type] ?? type}
             </Text>
@@ -110,10 +157,20 @@ export function EntityScreen() {
             <Text style={styles.iconBtnText}>{mode === 'dark' ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={[styles.pdfBtn, { backgroundColor: colors.accentOrange }]}
+            onPress={handleExportPdf}
+            disabled={pdfLoading}
+          >
+            {pdfLoading
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.btnText}>📄 PDF</Text>
+            }
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[styles.insightsBtn, { backgroundColor: colors.primary }]}
             onPress={() => setInsightsVisible(true)}
           >
-            <Text style={styles.insightsBtnText}>✦ Выводы</Text>
+            <Text style={styles.btnText}>✦ Выводы</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -160,6 +217,11 @@ export function EntityScreen() {
             <Text style={[styles.statSub, { color: colors.textMuted }]}>публикаций</Text>
           </View>
         </View>
+
+        {/* Wikipedia card — только для персон */}
+        {type === 'persons' && (
+          <WikipediaCard name={name} />
+        )}
 
         {/* Line chart */}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -273,12 +335,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   iconBtnText: { fontSize: 16 },
+  pdfBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.xl,
+    minWidth: 60,
+    alignItems: 'center',
+  },
   insightsBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: BorderRadius.xl,
   },
-  insightsBtnText: {
+  btnText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 12,
