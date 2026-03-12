@@ -1,81 +1,95 @@
 # Pulse — News Analytics Dashboard
 
-A React Native + Expo application for visualizing news publication data from a content platform. Supports **iOS** and **Web**.
+Дашборд для визуализации аналитических данных о публикуемых новостях.  
+Написан на **React Native + Expo**, тестируется через [Expo Go](https://expo.dev/go) / [Expo Snack](https://snack.expo.dev/).
 
-## Features
+---
 
-- **Summary Metrics** — total publications, reach (shows), likes, and comments
-- **Daily Chart** — publications count and total reach by day with toggle
-- **Topics Pie Chart** — topic distribution with metric toggle (count / reach)
-- **Top Persons** — ranked list of most mentioned persons with bar visualization
-- **Top Publishers** — horizontal bar chart of publishers by publications or reach
-- **Moderation Violations** — breakdown of bad verdicts (clickbait, yellow press, etc.)
-- **Word Cloud** — generated from publication titles, updates with filters
-- **News List** — searchable and sortable list of all publications with links
-- **Filters** — filter by topics, publishers, and persons; active filter chips
+## Функциональность
 
-## Tech Stack
+### Главная страница
+| Карточка | Описание |
+|---|---|
+| **Публикации** | Общее кол-во публикаций |
+| **Охват** | Суммарный охват |
+| **Динамика** | Curved Line Chart по дням с переключателем метрик (публикации / охват) |
+| **Тематики** | Donut Chart с переключателем метрик; клик по сегменту фильтрует данные |
+| **Облако слов** | Из заголовков новостей |
+| **Топ сущностей** | Персоны / Локации / Компании; клик — переход на страницу сущности |
 
-- [Expo](https://expo.dev/) (SDK 55)
-- React Native
-- TypeScript
-- [@supabase/supabase-js](https://supabase.com/docs/reference/javascript) — data source
-- [react-native-svg](https://github.com/software-mansion/react-native-svg) — custom charts
-- [@react-navigation/bottom-tabs](https://reactnavigation.org/) — navigation
-- [react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context)
+### Страница сущности
+Открывается при клике на сущность в топе. Содержит:
+- Статкарточки (публикации, охват) по упоминаниям выбранной сущности
+- Curved Line Chart с переключателем метрик
+- Облако слов из связанных новостей
+- Топ-10 новостей с упоминанием сущности
 
-## Data Source
+### Фильтрация
+- Кнопки **2 дня / 7 дней / 30 дней** для фильтрации по дате публикации
+- Клик на сегмент donut-диаграммы фильтрует по тематике
+- Кнопка **Сбросить** для очистки всех фильтров
 
-Supabase table `news_data` with 8,000+ news records including:
-- Publication metadata (title, URL, publisher, date)
-- Engagement metrics (shows, likes, comments)
-- Moderation results (topics, bad verdicts, persons, organizations, locations)
+### Дополнительно
+- **Переключатель темы** (☀️ / 🌙) — светлая и тёмная тема
+- **Кнопка «Выводы»** — заглушка AI-анализа с анимацией загрузки, модальным окном и кнопкой копирования
 
-## Getting Started
+---
+
+## Запуск в Expo Snack
+
+1. Откройте [https://snack.expo.dev/](https://snack.expo.dev/)
+2. Нажмите **Import from GitHub**
+3. Вставьте URL: `https://github.com/GlenKoks/Pulse`
+4. Нажмите **Import**
+
+Или откройте напрямую:
+**[https://snack.expo.dev/?github=GlenKoks/Pulse](https://snack.expo.dev/?github=GlenKoks/Pulse)**
+
+---
+
+## Локальный запуск
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
 npx expo start
-
-# Run on web
-npx expo start --web
-
-# Run on iOS (requires macOS + Xcode or Expo Go)
-npx expo start --ios
 ```
 
-## Project Structure
+---
+
+## Технологии
+
+| Библиотека | Назначение |
+|---|---|
+| `react-native-gifted-charts` | LineChart (curved, area) + PieChart (donut) |
+| `@react-navigation/native-stack` | Навигация между экранами |
+| `expo-clipboard` | Копирование текста выводов |
+| `react-native-svg` | Рендеринг графиков |
+| `expo-linear-gradient` | Градиенты в графиках |
+
+---
+
+## Структура проекта
 
 ```
 src/
-├── components/       # Reusable UI components
-│   ├── BadVerdictsChart.tsx
-│   ├── DailyChart.tsx
-│   ├── FilterPanel.tsx
-│   ├── LoadingScreen.tsx
-│   ├── PersonsRanking.tsx
-│   ├── PieChartView.tsx
-│   ├── PublishersChart.tsx
-│   ├── SectionHeader.tsx
-│   ├── StatCard.tsx
-│   └── WordCloud.tsx
+├── components/
+│   ├── DateFilter.tsx       # Фильтр по датам (2/7/30 дней)
+│   ├── DonutChart.tsx       # Donut-диаграмма тематик (Gifted Charts)
+│   ├── EntityRanking.tsx    # Топ сущностей с переключателем
+│   ├── InsightsModal.tsx    # Модальное окно AI-выводов
+│   ├── MetricLineChart.tsx  # Линейный график (Gifted Charts)
+│   ├── NewsTopList.tsx      # Топ новостей
+│   └── WordCloud.tsx        # Облако слов
+├── data/
+│   └── mockData.ts          # 500 синтетических новостей
 ├── hooks/
-│   └── NewsDataContext.tsx   # Global data context with Supabase
+│   ├── NewsDataContext.tsx  # Контекст данных и фильтрации
+│   └── ThemeContext.tsx     # Контекст темы (dark/light)
 ├── screens/
-│   ├── DashboardScreen.tsx   # Main analytics dashboard
-│   └── NewsListScreen.tsx    # Browsable news list
-├── services/
-│   └── supabase.ts           # Supabase client
+│   ├── DashboardScreen.tsx  # Главная страница
+│   └── EntityScreen.tsx     # Страница сущности
 ├── types/
-│   └── index.ts              # TypeScript interfaces
+│   └── index.ts             # TypeScript типы
 └── utils/
-    ├── dataProcessing.ts     # Data aggregation utilities
-    └── theme.ts              # Design tokens (colors, spacing)
+    └── dataProcessing.ts    # Утилиты обработки данных
 ```
-
-## Screenshots
-
-The app uses a dark theme inspired by modern analytics dashboards, with a color palette featuring purple primary (`#6C63FF`), teal accent (`#00D4AA`), and warm highlights.
