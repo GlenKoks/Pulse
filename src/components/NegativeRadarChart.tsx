@@ -45,8 +45,8 @@ export default function NegativeRadarChart({
   return (
     <View style={styles.container}>
       {/* Заголовок */}
-      <Text style={[styles.title, { color: colors.text }]}>
-        Распределение негативных тематик
+      <Text style={[styles.title, { color: '#FF0000' }]}>
+        ✓ ОБНОВЛЕНИЕ СИНХРОНИЗИРОВАНО - Распределение негативных тематик
       </Text>
 
       {/* Контейнер графика с фоном */}
