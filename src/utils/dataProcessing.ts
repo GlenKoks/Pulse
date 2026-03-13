@@ -37,10 +37,17 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
   return data.filter(item => {
     if (filters.dateRange !== null) {
       if (!item.dt) return false;
-      const itemDate = new Date(item.dt);
+      // Парсим дату из строки YYYY-MM-DD
+      const [year, month, day] = item.dt.substring(0, 10).split('-').map(Number);
+      const itemDate = new Date(year, month - 1, day);
+      itemDate.setHours(0, 0, 0, 0);
+      
+      // Вычисляем дату cutoff
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - filters.dateRange);
       cutoff.setHours(0, 0, 0, 0);
+      
+      // Сравниваем только даты, без времени
       if (itemDate < cutoff) return false;
     }
     if (filters.selectedTopic) {
