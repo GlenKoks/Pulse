@@ -3,13 +3,16 @@ import type { NewsItemFromSupabase } from '../types/supabase';
 
 /**
  * Получить все публикации за последние N дней с метриками и связанными сущностями
+ * Используем надежный метод с отдельными запросами для стабильности в браузере
  */
 export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promise<NewsItemFromSupabase[]> {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysBack);
   const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-  // Получаем публикации с метриками и издателем одним запросом
+  console.log('--- FETCHING FROM SUPABASE ---');
+
+  // 1. Получаем публикации
   const { data: publications, error: pubError } = await supabase
     .from('publications')
     .select(`
@@ -17,110 +20,66 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
       url,
       title,
       published_at,
-      publisher:publishers(name),
-      metrics:publication_metrics(shows, likes, comments)
+      publisher:publishers(name)
     `)
     .gte('published_at', cutoffDateStr)
     .order('published_at', { ascending: false });
 
-  if (pubError) {
-    console.error('Error fetching publications:', pubError);
-    throw pubError;
-  }
-
-  if (!publications || publications.length === 0) {
-    return [];
-  }
+  if (pubError) throw pubError;
+  if (!publications || publications.length === 0) return [];
 
   const pubIds = publications.map((p: any) => p.id);
 
-  // Получаем связанные сущности для каждой публикации
-  const { data: pubPersons, error: personsError } = await supabase
-    .from('publication_persons')
-    .select('publication_id, person:persons(name)')
+  // 2. Получаем метрики (отдельно)
+  const { data: metrics, error: metricsError } = await supabase
+    .from('publication_metrics')
+    .select('publication_id, shows, likes, comments')
     .in('publication_id', pubIds);
 
-  const { data: pubOrgs, error: orgsError } = await supabase
-    .from('publication_organizations')
-    .select('publication_id, organization:organizations(name)')
-    .in('publication_id', pubIds);
+  const metricsMap = new Map(metrics?.map((m: any) => [m.publication_id, m]) || []);
 
-  const { data: pubLocs, error: locsError } = await supabase
-    .from('publication_locations')
-    .select('publication_id, location:locations(name)')
-    .in('publication_id', pubIds);
+  // 3. Получаем связанные сущности (отдельно для каждой таблицы)
+  // Мы используем плоский селект, чтобы избежать проблем с именованием джойнов в браузере
+  const fetchRelation = async (table: string, entityTable: string) => {
+    const { data, error } = await supabase
+      .from(table)
+      .select(`publication_id, ${entityTable}(name)`)
+      .in('publication_id', pubIds);
+    if (error) console.error(`Error fetching ${table}:`, error);
+    return data || [];
+  };
 
-  const { data: pubCountries, error: countriesError } = await supabase
-    .from('publication_countries')
-    .select('publication_id, country:countries(name)')
-    .in('publication_id', pubIds);
+  const [relPersons, relOrgs, relLocs, relCountries, relTopics, relVerdicts] = await Promise.all([
+    fetchRelation('publication_persons', 'persons'),
+    fetchRelation('publication_organizations', 'organizations'),
+    fetchRelation('publication_locations', 'locations'),
+    fetchRelation('publication_countries', 'countries'),
+    fetchRelation('publication_topics', 'topics'),
+    fetchRelation('publication_bad_verdicts', 'bad_verdicts')
+  ]);
 
-  const { data: pubTopics, error: topicsError } = await supabase
-    .from('publication_topics')
-    .select('publication_id, topic:topics(name)')
-    .in('publication_id', pubIds);
-
-  const { data: pubVerdicts, error: verdictsError } = await supabase
-    .from('publication_bad_verdicts')
-    .select('publication_id, verdict:bad_verdicts(name)')
-    .in('publication_id', pubIds);
-
-  if (personsError || orgsError || locsError || countriesError || topicsError || verdictsError) {
-    console.error('Error fetching relations:', {
-      personsError,
-      orgsError,
-      locsError,
-      countriesError,
-      topicsError,
-      verdictsError,
+  // 4. Группируем связи по publication_id
+  const groupByPubId = (relations: any[], entityKey: string) => {
+    const map = new Map<string, string[]>();
+    relations.forEach(item => {
+      const pubId = item.publication_id;
+      const name = item[entityKey]?.name;
+      if (name) {
+        if (!map.has(pubId)) map.set(pubId, []);
+        map.get(pubId)!.push(name);
+      }
     });
-  }
+    return map;
+  };
 
-  // Создаем карты для быстрого доступа
-  const personsMap = new Map<string, string[]>();
-  const orgsMap = new Map<string, string[]>();
-  const locsMap = new Map<string, string[]>();
-  const countriesMap = new Map<string, string[]>();
-  const topicsMap = new Map<string, string[]>();
-  const verdictsMap = new Map<string, string[]>();
+  const personsMap = groupByPubId(relPersons, 'persons');
+  const orgsMap = groupByPubId(relOrgs, 'organizations');
+  const locsMap = groupByPubId(relLocs, 'locations');
+  const countriesMap = groupByPubId(relCountries, 'countries');
+  const topicsMap = groupByPubId(relTopics, 'topics');
+  const verdictsMap = groupByPubId(relVerdicts, 'bad_verdicts');
 
-  pubPersons?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!personsMap.has(pubId)) personsMap.set(pubId, []);
-    if (item.person?.name) personsMap.get(pubId)!.push(item.person.name);
-  });
-
-  pubOrgs?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!orgsMap.has(pubId)) orgsMap.set(pubId, []);
-    if (item.organization?.name) orgsMap.get(pubId)!.push(item.organization.name);
-  });
-
-  pubLocs?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!locsMap.has(pubId)) locsMap.set(pubId, []);
-    if (item.location?.name) locsMap.get(pubId)!.push(item.location.name);
-  });
-
-  pubCountries?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!countriesMap.has(pubId)) countriesMap.set(pubId, []);
-    if (item.country?.name) countriesMap.get(pubId)!.push(item.country.name);
-  });
-
-  pubTopics?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!topicsMap.has(pubId)) topicsMap.set(pubId, []);
-    if (item.topic?.name) topicsMap.get(pubId)!.push(item.topic.name);
-  });
-
-  pubVerdicts?.forEach((item: any) => {
-    const pubId = item.publication_id;
-    if (!verdictsMap.has(pubId)) verdictsMap.set(pubId, []);
-    if (item.verdict?.name) verdictsMap.get(pubId)!.push(item.verdict.name);
-  });
-
-  // Маппинг ISO-3 в ISO-2 для карты (так как в БД коды типа 'ISR', 'HUN')
+  // Маппинг ISO-3 в ISO-2 для карты
   const iso3to2: Record<string, string> = {
     'AFG': 'AF', 'ALB': 'AL', 'DZA': 'DZ', 'AND': 'AD', 'AGO': 'AO', 'ARG': 'AR', 'ARM': 'AM', 'AUS': 'AU', 'AUT': 'AT', 'AZE': 'AZ',
     'BHS': 'BS', 'BHR': 'BH', 'BGD': 'BD', 'BRB': 'BB', 'BLR': 'BY', 'BEL': 'BE', 'BLZ': 'BZ', 'BEN': 'BJ', 'BTN': 'BT', 'BOL': 'BO',
@@ -144,12 +103,9 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
     'ZWE': 'ZW'
   };
 
-  // Трансформируем в формат приложения
-  const result: NewsItemFromSupabase[] = publications.map((pub: any) => {
-    // В Supabase metrics может прийти как объект (если 1 к 1) или массив
-    const metricsRaw = pub.metrics;
-    const m = Array.isArray(metricsRaw) ? (metricsRaw[0] || { shows: 0, likes: 0, comments: 0 }) : (metricsRaw || { shows: 0, likes: 0, comments: 0 });
-    
+  // 5. Финальная сборка данных
+  return publications.map((pub: any) => {
+    const m = metricsMap.get(pub.id) || { shows: 0, likes: 0, comments: 0 };
     const rawCountries = countriesMap.get(pub.id) || [];
     const iso2Countries = rawCountries.map(c => iso3to2[c] || c);
 
@@ -170,13 +126,8 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
       bad_verdicts_list: verdictsMap.get(pub.id) || [],
     };
   });
-
-  return result;
 }
 
-/**
- * Получить уникальные значения для фильтров
- */
 export async function fetchFilterOptions() {
   const { data: persons } = await supabase.from('persons').select('name').order('name');
   const { data: orgs } = await supabase.from('organizations').select('name').order('name');

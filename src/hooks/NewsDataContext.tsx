@@ -91,7 +91,12 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         setError(null);
         const supabaseData = await fetchPublicationsWithMetrics(30);
+        console.log('DEBUG: RAW SUPABASE DATA (FIRST ITEM):', supabaseData[0]);
+        console.log('DEBUG: TOTAL ITEMS FETCHED:', supabaseData.length);
+        
         const transformedData = supabaseData.map(transformSupabaseToNewsItem);
+        console.log('DEBUG: TRANSFORMED DATA (FIRST ITEM):', transformedData[0]);
+        
         setAllData(transformedData);
       } catch (err) {
         console.error('Full Supabase Error Context:', err);
