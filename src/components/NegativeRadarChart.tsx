@@ -38,35 +38,18 @@ export default function NegativeRadarChart({
     );
   }
 
-  // Динамические цвета в зависимости от темы
-  const labelColor = mode === 'dark' ? '#c0c0c0' : '#444444';
-  const chartColor = mode === 'dark' ? '#FF6B35' : '#FF4B8B';
-
   return (
     <View style={styles.container}>
       {/* Заголовок */}
-      <Text style={[styles.title, { color: '#FF0000' }]}>
-        ✓ ОБНОВЛЕНИЕ СИНХРОНИЗИРОВАНО - Распределение негативных тематик
+      <Text style={[styles.title, { color: colors.text }]}>
+        Распределение негативных тематик
       </Text>
 
-      {/* Контейнер графика с фоном */}
-      <View
-        style={[
-          styles.chartContainer,
-          {
-            backgroundColor: mode === 'dark' ? '#0f0f1e' : '#fafafa',
-            borderColor: mode === 'dark' ? '#2a2a3e' : '#e0e0e0',
-          },
-        ]}
-      >
+      {/* Контейнер графика */}
+      <View style={styles.chartWrapper}>
         <RadarChart
           data={values}
           labels={labels}
-          color={chartColor}
-          labelFontSize={13}
-          labelColor={labelColor}
-          maxValue={100}
-          noOfSections={5}
         />
       </View>
 
@@ -77,10 +60,7 @@ export default function NegativeRadarChart({
             key={label}
             style={[
               styles.legendItem,
-              {
-                backgroundColor: colors.surfaceLight,
-                borderColor: mode === 'dark' ? '#2a2a3e' : '#e0e0e0',
-              },
+              { backgroundColor: colors.surfaceLight, borderColor: colors.border },
             ]}
           >
             <View
@@ -128,14 +108,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: Spacing.xs,
   },
-  chartContainer: {
-    width: '100%',
+  chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
     paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
   },
   legend: {
     width: '100%',
