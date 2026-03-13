@@ -21,8 +21,7 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
       metrics:publication_metrics(shows, likes, comments)
     `)
     .gte('published_at', cutoffDateStr)
-    .order('published_at', { ascending: false })
-    .limit(500); // Ограничим для стабильности
+    .order('published_at', { ascending: false });
 
   if (pubError) {
     console.error('Error fetching publications:', pubError);
