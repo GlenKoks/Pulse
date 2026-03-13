@@ -98,6 +98,10 @@ export const GEO_COUNTRIES: { code: string; name: string; weight: number }[] = [
   { code: 'KZ', name: 'Казахстан',         weight: 0.10 },
   { code: 'BY', name: 'Беларусь',          weight: 0.10 },
   { code: 'IL', name: 'Израиль',           weight: 0.08 },
+  { code: 'AE', name: 'ОАЭ',               weight: 0.05 },
+  { code: 'AM', name: 'Армения',           weight: 0.05 },
+  { code: 'GE', name: 'Грузия',            weight: 0.05 },
+  { code: 'UZ', name: 'Узбекистан',        weight: 0.05 },
 ];
 
 // Словарь code → name для быстрого поиска

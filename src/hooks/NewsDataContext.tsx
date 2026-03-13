@@ -11,10 +11,8 @@ import {
   getWordCloud,
   getGeoStats,
   applyFilters,
-  parseList,
 } from '../utils/dataProcessing';
-import { fetchPublicationsWithMetrics } from '../utils/supabaseQueries';
-import type { NewsItemFromSupabase } from '../types/supabase';
+import { fetchAllNewsFromSupabase } from '../utils/supabaseQueries';
 
 const DEFAULT_FILTERS: Filters = {
   topics: [],
@@ -50,31 +48,38 @@ interface NewsDataContextType {
 const NewsDataContext = createContext<NewsDataContextType | null>(null);
 
 /**
- * Трансформирует данные из Supabase в формат приложения
+ * Трансформирует данные из новой таблицы total_data в формат NewsItem
  */
-function transformSupabaseToNewsItem(item: NewsItemFromSupabase): NewsItem {
-  // Помощник для безопасного объединения массивов в строку
-  const joinList = (list: string[] | undefined) => {
-    if (!list || !Array.isArray(list) || list.length === 0) return null;
-    return list.filter(Boolean).join(', ');
-  };
+function transformTotalDataToNewsItem(item: any): NewsItem {
+  // Собираем список негативных вердиктов из колонок bad_*
+  const badVerdicts: string[] = [];
+  if (item['bad_18+']) badVerdicts.push('18+');
+  if (item['bad_Желтуха']) badVerdicts.push('Желтуха');
+  if (item['bad_Конфликт']) badVerdicts.push('Конфликт');
+  if (item['bad_Мат']) badVerdicts.push('Мат');
+  if (item['bad_Мигранты']) badVerdicts.push('Мигранты');
+  if (item['bad_Насилие']) badVerdicts.push('Насилие');
+  if (item['bad_Политика']) badVerdicts.push('Политика');
+  if (item['bad_Спам']) badVerdicts.push('Спам');
+  if (item['bad_Трагическое']) badVerdicts.push('Трагическое');
+  if (item['bad_Хейтспич']) badVerdicts.push('Хейтспич');
 
   return {
-    bad_verdicts_list: joinList(item.bad_verdicts_list),
-    comments: item.comments?.toString() || '0',
-    dt: item.dt,
-    likes: item.likes?.toString() || '0',
-    ndx: null,
-    pub_url: item.pub_url,
-    publication_title_name: item.publication_title_name,
-    publisher_name: item.publisher_name,
-    shows: item.shows || 0,
-    topics_verdicts_list: joinList(item.topics_verdicts_list),
-    persons: joinList(item.persons),
-    organizations: joinList(item.organizations),
-    locations: joinList(item.locations),
-    country: item.countries.length > 0 ? item.countries[0] : null,
-    geo: item.countries.length > 0 ? item.countries[0] : null,
+    bad_verdicts_list: badVerdicts.length > 0 ? badVerdicts.join(', ') : null,
+    comments: String(item.comments || '0'),
+    dt: item.dt || new Date().toISOString().split('T')[0],
+    likes: String(item.likes || '0'),
+    ndx: item.ndx || null,
+    pub_url: item.pub_url || '',
+    publication_title_name: item.publication_title_name || 'Без заголовка',
+    publisher_name: item.publisher_name || 'Неизвестный источник',
+    shows: Number(item.shows) || 0,
+    topics_verdicts_list: item.topics_verdicts_list || null,
+    persons: item.persons || null,
+    organizations: item.organizations || null,
+    locations: item.locations || null,
+    country: item.country || null,
+    geo: item.country_iso2 || null, // Используем iso2 для карты
   };
 }
 
@@ -84,24 +89,21 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
-  // Загружаем данные из Supabase при монтировании компонента
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const supabaseData = await fetchPublicationsWithMetrics(30);
-        console.log('DEBUG: RAW SUPABASE DATA (FIRST ITEM):', supabaseData[0]);
-        console.log('DEBUG: TOTAL ITEMS FETCHED:', supabaseData.length);
         
-        const transformedData = supabaseData.map(transformSupabaseToNewsItem);
-        console.log('DEBUG: TRANSFORMED DATA (FIRST ITEM):', transformedData[0]);
+        const rawData = await fetchAllNewsFromSupabase();
+        console.log('DEBUG: TOTAL ITEMS FETCHED FROM total_data:', rawData.length);
         
+        const transformedData = rawData.map(transformTotalDataToNewsItem);
         setAllData(transformedData);
       } catch (err) {
-        console.error('Full Supabase Error Context:', err);
-        const errorMsg = err instanceof Error ? `${err.name}: ${err.message}` : JSON.stringify(err);
-        setError(`Supabase Error: ${errorMsg}`);
+        console.error('Supabase Fetch Error:', err);
+        const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        setError(`Ошибка загрузки данных: ${errorMsg}`);
         setAllData([]);
       } finally {
         setLoading(false);
@@ -129,8 +131,6 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
     publisherStats: getPublisherStats(filteredData),
     badVerdictStats: getBadVerdictStats(filteredData),
     wordCloud: getWordCloud(filteredData),
-    // geoStats считается по ВСЕМ данным (без geo-фильтра) чтобы карта всегда
-    // показывала полную тепловую картину, а не схлопывалась при выборе страны
     geoStats: getGeoStats(allData),
     totalShows: filteredData.reduce((sum, item) => sum + (item.shows || 0), 0),
     totalLikes: filteredData.reduce((sum, item) => sum + parseInt(item.likes || '0', 10), 0),
