@@ -25,8 +25,6 @@ export default function NegativeRadarChart({
 }: NegativeRadarChartProps) {
   const { colors, mode } = useTheme();
 
-  const chartSize = Math.min(SCREEN_WIDTH - Spacing.md * 4, 300);
-
   // Проверяем, есть ли данные
   const hasData = values.some(v => v > 0);
 
@@ -45,24 +43,20 @@ export default function NegativeRadarChart({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.chartWrapper, { backgroundColor: mode === 'dark' ? '#1a1a2e' : '#f9f9f9', borderRadius: 12 }]}>
+      {/* Заголовок */}
+      <Text style={[styles.title, { color: colors.text }]}>
+        Распределение негативных тематик
+      </Text>
+
+      {/* Сам график */}
+      <View style={styles.chartWrapper}>
         <RadarChart
           data={values}
           labels={labels}
-          maxValue={100}
-          noOfSections={5}
-          chartSize={chartSize}
-          isAnimated={true}
-          animationDuration={600}
-          color="#FF4B8B"
-          labelFontSize={11}
+          color={mode === 'dark' ? '#FF4B8B' : '#FF6B35'}
+          labelFontSize={12}
           labelFontWeight="600"
-          strokeWidth={2}
-          strokeOpacity={0.7}
-          fillOpacity={0.25}
-          showVerticalLines={true}
-          showHorizontalLines={true}
-          showLabels={true}
+          labelColor={mode === 'dark' ? '#e0e0e0' : '#333333'}
         />
       </View>
 
@@ -111,13 +105,16 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
   },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: Spacing.sm,
+  },
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingVertical: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    paddingVertical: Spacing.lg,
   },
   legend: {
     width: '100%',
