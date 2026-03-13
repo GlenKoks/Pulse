@@ -63,7 +63,11 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
     const map = new Map<string, string[]>();
     relations.forEach(item => {
       const pubId = item.publication_id;
-      const name = item[entityKey]?.name;
+      // В Supabase при джойне объект может называться как таблица в единственном или множественном числе
+      // Проверяем оба варианта для надежности
+      const entity = item[entityKey] || item[entityKey.replace(/s$/, '')];
+      const name = entity?.name;
+      
       if (name) {
         if (!map.has(pubId)) map.set(pubId, []);
         map.get(pubId)!.push(name);
