@@ -16,7 +16,7 @@ import { InsightsModal } from '../components/InsightsModal';
 import WorldMapCard from '../components/WorldMapCard';
 import { formatNumber } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
-import { usePdfExport } from '../hooks/usePdfExport';
+import { usePdfExport, PdfExportOptions } from '../hooks/usePdfExport';
 
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -29,10 +29,79 @@ export function DashboardScreen() {
 
   const [insightsVisible, setInsightsVisible] = useState(false);
   const scrollRef = useRef<ScrollViewType>(null);
-  const { exportScreenAsPdf, loading: pdfLoading } = usePdfExport();
+  const { exportPdf, loading: pdfLoading } = usePdfExport();
 
   const handleExportPdf = () => {
-    exportScreenAsPdf(scrollRef, 'Дашборд — Аналитика новостей');
+    // Подготавливаем таблицу топ-тем
+    const topicsTable = topicStats.slice(0, 10).map(t => [
+      t.topic,
+      t.count.toString(),
+      formatNumber(t.totalShows),
+    ]);
+
+    // Подготавливаем таблицу топ-персон
+    const personsTable = personStats.slice(0, 10).map(p => [
+      p.person,
+      p.count.toString(),
+      formatNumber(p.totalShows),
+    ]);
+
+    // Подготавливаем таблицу топ-локаций
+    const locationsTable = locationStats.slice(0, 10).map(l => [
+      l.location,
+      l.count.toString(),
+      formatNumber(l.totalShows),
+    ]);
+
+    // Подготавливаем таблицу топ-компаний
+    const companiesTable = companyStats.slice(0, 10).map(c => [
+      c.company,
+      c.count.toString(),
+      formatNumber(c.totalShows),
+    ]);
+
+    const options: PdfExportOptions = {
+      title: 'Дашборд — Аналитика новостей',
+      sections: [
+        {
+          heading: 'Общая статистика',
+          rows: [
+            { label: 'Всего публикаций', value: formatNumber(filteredData.length) },
+            { label: 'Суммарный охват', value: formatNumber(totalShows) },
+            { label: 'Период', value: filters.dateRange ? `${filters.dateRange} дней` : 'Все время' },
+          ],
+        },
+        {
+          heading: 'Топ-10 тематик',
+          table: {
+            headers: ['Тематика', 'Публикации', 'Охват'],
+            rows: topicsTable,
+          },
+        },
+        {
+          heading: 'Топ-10 персон',
+          table: {
+            headers: ['Персона', 'Упоминания', 'Охват'],
+            rows: personsTable,
+          },
+        },
+        {
+          heading: 'Топ-10 локаций',
+          table: {
+            headers: ['Локация', 'Упоминания', 'Охват'],
+            rows: locationsTable,
+          },
+        },
+        {
+          heading: 'Топ-10 компаний',
+          table: {
+            headers: ['Компания', 'Упоминания', 'Охват'],
+            rows: companiesTable,
+          },
+        },
+      ],
+    };
+    exportPdf(options);
   };
 
 

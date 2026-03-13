@@ -20,7 +20,7 @@ import {
 } from '../utils/dataProcessing';
 import { Filters } from '../types';
 import { Spacing, BorderRadius } from '../utils/theme';
-import { usePdfExport, PdfExportOptions } from '../hooks/usePdfExport';
+import { usePdfExport, PdfExportOptions, PdfSection } from '../hooks/usePdfExport';
 
 type RouteParams = {
   Entity: {
@@ -85,6 +85,24 @@ export function EntityScreen() {
     : 0;
 
   const handleExportPdf = () => {
+    // Подготавливаем список топ-новостей
+    const topNewsList = filteredData
+      .sort((a, b) => (b.shows || 0) - (a.shows || 0))
+      .slice(0, 10)
+      .map((item, idx) => {
+        const title = item.publication_title_name || 'Без названия';
+        const shows = formatNumber(item.shows || 0);
+        const publisher = item.publisher_name || 'Неизвестный издатель';
+        return `${idx + 1}. "${title}" (${publisher}, охват: ${shows})`;
+      });
+
+    // Подготавливаем таблицу негативных тематик
+    const negativeTable = negativeRadarData.labels.map((label, idx) => [
+      label,
+      negativeRadarData.counts[idx].toString(),
+      `${negativeRadarData.values[idx]}%`,
+    ]);
+
     const options: PdfExportOptions = {
       title: `${ENTITY_LABEL[type] ?? type}: ${name}`,
       sections: [
@@ -94,13 +112,25 @@ export function EntityScreen() {
             { label: 'Публикации', value: formatNumber(filteredData.length) },
             { label: 'Охват', value: formatNumber(totalShows) },
             { label: 'Негатив', value: `${negativePercent}%` },
+            { label: 'Период', value: filters.dateRange ? `${filters.dateRange} дней` : 'Все время' },
           ],
         },
         {
           heading: 'Описание',
           text: `Аналитический отчет по сущности "${name}" (${ENTITY_LABEL[type] ?? type}). Данные включают публикации за выбранный период с анализом охвата и негативного контента.`,
         },
-      ],
+        negativeCount > 0 ? {
+          heading: 'Негативные тематики',
+          table: {
+            headers: ['Тематика', 'Публикации', 'Доля'],
+            rows: negativeTable,
+          },
+        } : null,
+        topNewsList.length > 0 ? {
+          heading: 'Топ новостей',
+          list: topNewsList,
+        } : null,
+      ].filter(Boolean) as PdfSection[],
     };
     exportPdf(options);
   };

@@ -23,6 +23,8 @@ export interface PdfSection {
   heading: string;
   rows?: { label: string; value: string }[];
   text?: string;
+  table?: { headers: string[]; rows: string[][] };
+  list?: string[];
 }
 
 function buildHtml(options: PdfExportOptions): string {
@@ -31,13 +33,28 @@ function buildHtml(options: PdfExportOptions): string {
 
   const sectionsHtml = sections.map(s => {
     let content = '';
+    
     if (s.rows && s.rows.length > 0) {
-      content = `<table>
+      content = `<table class="key-value">
         ${s.rows.map(r => `<tr><td class="label">${r.label}</td><td class="value">${r.value}</td></tr>`).join('')}
       </table>`;
+    } else if (s.table && s.table.headers.length > 0) {
+      content = `<table class="data-table">
+        <thead>
+          <tr>${s.table.headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${s.table.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>`;
+    } else if (s.list && s.list.length > 0) {
+      content = `<ul class="item-list">
+        ${s.list.map(item => `<li>${item}</li>`).join('')}
+      </ul>`;
     } else if (s.text) {
       content = `<p class="text">${s.text}</p>`;
     }
+    
     return `<div class="section">
       <h2>${s.heading}</h2>
       ${content}
@@ -100,13 +117,49 @@ function buildHtml(options: PdfExportOptions): string {
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    table { width: 100%; border-collapse: collapse; }
-    tr { border-bottom: 1px solid #EEF0F8; }
-    tr:last-child { border-bottom: none; }
-    td { padding: 8px 4px; font-size: 13px; }
-    .label { color: #5A5E78; width: 55%; }
-    .value { color: #1a1d27; font-weight: 600; text-align: right; }
-    .text { font-size: 13px; color: #3a3d50; line-height: 1.6; }
+    
+    /* Key-value table */
+    table.key-value { width: 100%; border-collapse: collapse; }
+    table.key-value tr { border-bottom: 1px solid #EEF0F8; }
+    table.key-value tr:last-child { border-bottom: none; }
+    table.key-value td { padding: 8px 4px; font-size: 13px; }
+    table.key-value .label { color: #5A5E78; width: 55%; }
+    table.key-value .value { color: #1a1d27; font-weight: 600; text-align: right; }
+    
+    /* Data table */
+    table.data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    table.data-table thead { background: #F3F1FF; }
+    table.data-table th { 
+      padding: 10px 6px; 
+      font-size: 12px; 
+      font-weight: 700; 
+      color: #5A52E0; 
+      text-align: left;
+      border-bottom: 2px solid #DDE1F0;
+    }
+    table.data-table td { 
+      padding: 8px 6px; 
+      font-size: 12px; 
+      color: #3a3d50;
+      border-bottom: 1px solid #EEF0F8;
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    
+    /* Lists */
+    ul.item-list { 
+      margin-left: 20px; 
+      font-size: 13px; 
+      color: #3a3d50; 
+      line-height: 1.8;
+    }
+    ul.item-list li { margin-bottom: 6px; }
+    
+    .text { 
+      font-size: 13px; 
+      color: #3a3d50; 
+      line-height: 1.6; 
+    }
+    
     .footer {
       margin-top: 40px;
       padding-top: 16px;
