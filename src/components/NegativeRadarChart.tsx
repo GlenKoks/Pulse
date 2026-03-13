@@ -39,9 +39,8 @@ export default function NegativeRadarChart({
   }
 
   // Динамические цвета в зависимости от темы
-  const labelColor = mode === 'dark' ? '#b0b0b0' : '#555555';
-  const gridColor = mode === 'dark' ? '#333333' : '#e8e8e8';
-  const polygonColor = mode === 'dark' ? '#FF6B35' : '#FF4B8B';
+  const labelColor = mode === 'dark' ? '#c0c0c0' : '#444444';
+  const chartColor = mode === 'dark' ? '#FF6B35' : '#FF4B8B';
 
   return (
     <View style={styles.container}>
@@ -63,17 +62,9 @@ export default function NegativeRadarChart({
         <RadarChart
           data={values}
           labels={labels}
-          color={polygonColor}
-          labelFontSize={11}
-          labelFontWeight="500"
+          color={chartColor}
+          labelFontSize={13}
           labelColor={labelColor}
-          strokeWidth={1.5}
-          strokeOpacity={0.6}
-          fillOpacity={0.15}
-          isLabelVisible={true}
-          showVerticalLines={true}
-          showHorizontalLines={true}
-          showLabels={true}
           maxValue={100}
           noOfSections={5}
         />
