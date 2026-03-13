@@ -216,23 +216,30 @@ export function getWordCloud(data: NewsItem[]): WordFrequency[] {
 
 export function getNegativeTopicRadarData(
   data: NewsItem[],
-  negativeTopics: readonly string[] = ['Желтуха', 'Конфликт', 'Насилие', 'Жестокость']
+  negativeTopics: readonly string[] = ['Желтуха', 'Насилие', 'Трагическое', 'Политика', 'Конфликт']
 ): { labels: string[]; values: number[]; counts: number[]; total: number } {
   const countMap: Record<string, number> = {};
   for (const topic of negativeTopics) countMap[topic] = 0;
   const total = data.length;
+  
   for (const item of data) {
     if (!item.bad_verdicts_list) continue;
-    for (const verdict of item.bad_verdicts_list.split(',')) {
+    // Используем parseList для корректного парсинга bad_verdicts_list
+    const verdicts = parseList(item.bad_verdicts_list);
+    for (const verdict of verdicts) {
       const v = verdict.trim();
       if (v in countMap) countMap[v]++;
     }
   }
+  
   // Значения в процентах (0–100) от общего числа публикаций сущности
   const absoluteCounts = negativeTopics.map(t => countMap[t] || 0);
   const percentValues = absoluteCounts.map(c =>
     total > 0 ? Math.round((c / total) * 100) : 0
   );
+  
+  console.log('DEBUG RadarChart Data:', { countMap, absoluteCounts, percentValues, total, dataLength: data.length });
+  
   return {
     labels: [...negativeTopics],
     values: percentValues,   // проценты для RadarChart (0–100)

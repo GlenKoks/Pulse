@@ -5,8 +5,8 @@ const TOPICS = [
   'Здоровье', 'Наука', 'Общество', 'Бизнес', 'Международные отношения',
 ];
 
-// Четыре негативные тематики для RadarChart
-export const NEGATIVE_TOPICS = ['Желтуха', 'Конфликт', 'Насилие', 'Жестокость'] as const;
+// Пять негативных тематик для RadarChart
+export const NEGATIVE_TOPICS = ['Желтуха', 'Насилие', 'Трагическое', 'Политика', 'Конфликт'] as const;
 export type NegativeTopic = typeof NEGATIVE_TOPICS[number];
 
 const PERSONS = [
