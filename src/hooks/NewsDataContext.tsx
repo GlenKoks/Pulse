@@ -88,8 +88,9 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         const transformedData = supabaseData.map(transformSupabaseToNewsItem);
         setAllData(transformedData);
       } catch (err) {
-        console.error('Failed to load data from Supabase:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load data');
+        console.error('Full Supabase Error Context:', err);
+        const errorMsg = err instanceof Error ? `${err.name}: ${err.message}` : JSON.stringify(err);
+        setError(`Supabase Error: ${errorMsg}`);
         setAllData([]);
       } finally {
         setLoading(false);
