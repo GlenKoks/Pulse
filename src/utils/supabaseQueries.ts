@@ -9,20 +9,20 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
   cutoffDate.setDate(cutoffDate.getDate() - daysBack);
   const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-  // Получаем публикации с метриками и издателем
+  // Получаем публикации с метриками и издателем одним запросом
   const { data: publications, error: pubError } = await supabase
     .from('publications')
-    .select(
-      `
+    .select(`
       id,
       url,
       title,
       published_at,
-      publisher:publishers(name)
-    `
-    )
+      publisher:publishers(name),
+      metrics:publication_metrics(shows, likes, comments)
+    `)
     .gte('published_at', cutoffDateStr)
-    .order('published_at', { ascending: false });
+    .order('published_at', { ascending: false })
+    .limit(500); // Ограничим для стабильности
 
   if (pubError) {
     console.error('Error fetching publications:', pubError);
@@ -33,19 +33,7 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
     return [];
   }
 
-  // Получаем метрики для всех публикаций
   const pubIds = publications.map((p: any) => p.id);
-  const { data: metrics, error: metricsError } = await supabase
-    .from('publication_metrics')
-    .select('publication_id, shows, likes, comments')
-    .in('publication_id', pubIds);
-
-  if (metricsError) {
-    console.error('Error fetching metrics:', metricsError);
-    throw metricsError;
-  }
-
-  const metricsMap = new Map(metrics?.map((m: any) => [m.publication_id, m]) || []);
 
   // Получаем связанные сущности для каждой публикации
   const { data: pubPersons, error: personsError } = await supabase
@@ -135,7 +123,7 @@ export async function fetchPublicationsWithMetrics(daysBack: number = 30): Promi
 
   // Трансформируем в формат приложения
   const result: NewsItemFromSupabase[] = publications.map((pub: any) => {
-    const m = metricsMap.get(pub.id) || { shows: 0, likes: 0, comments: 0 };
+    const m = (pub.metrics && pub.metrics[0]) || { shows: 0, likes: 0, comments: 0 };
     return {
       id: pub.id,
       pub_url: pub.url,
