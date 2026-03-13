@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { RadarChart } from 'react-native-gifted-charts';
+import { BarChart } from 'react-native-gifted-charts';
 import { useTheme } from '../hooks/ThemeContext';
 import { Spacing } from '../utils/theme';
 
@@ -14,7 +14,6 @@ interface NegativeRadarChartProps {
   total: number;
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const TOPIC_COLORS = ['#FF6B35', '#FF4B8B', '#FFD93D', '#F44336'];
 
 export default function NegativeRadarChart({
@@ -23,13 +22,9 @@ export default function NegativeRadarChart({
   counts,
   total,
 }: NegativeRadarChartProps) {
-  const { colors, mode } = useTheme();
-
-  const chartSize = Math.min(SCREEN_WIDTH - Spacing.md * 4, 280);
-
-  // Передаём проценты напрямую (0–100), maxValue=100
+  const { colors } = useTheme();
+  
   const hasData = values.some(v => v > 0);
-
   if (!hasData) {
     return (
       <View style={styles.emptyContainer}>
@@ -40,46 +35,37 @@ export default function NegativeRadarChart({
     );
   }
 
+  const barData = values.map((v, i) => ({
+    value: v,
+    label: labels[i],
+    frontColor: TOPIC_COLORS[i % TOPIC_COLORS.length],
+    topLabelComponent: () => (
+      <Text style={{ color: colors.text, fontSize: 10, marginBottom: 4 }}>{v}%</Text>
+    ),
+  }));
+
   return (
     <View style={styles.container}>
       <View style={styles.chartWrapper}>
-        <RadarChart
-          data={values}
-          labels={labels}
-          maxValue={100}
+        <BarChart
+          data={barData}
+          barWidth={40}
           noOfSections={4}
-          chartSize={chartSize}
+          maxValue={100}
           isAnimated
           animationDuration={600}
-          labelConfig={{
-            fontSize: 12,
-            stroke: colors.textSecondary,
-            fontWeight: '600',
-          }}
-          gridConfig={{
-            stroke: colors.border,
-            strokeWidth: 1,
-            fill: mode === 'dark' ? '#1a1a2e' : '#f0f0f8',
-            opacity: 1,
-          }}
-          polygonConfig={{
-            stroke: '#FF4B8B',
-            strokeWidth: 2.5,
-            fill: '#FF4B8B',
-            opacity: 0.3,
-            gradientColor: '#FF6B35',
-            showGradient: true,
-            isAnimated: true,
-            animationDuration: 600,
-          }}
-          asterLinesConfig={{
-            stroke: colors.border,
-            strokeWidth: 1,
-          }}
+          yAxisThickness={0}
+          xAxisThickness={1}
+          xAxisColor={colors.border}
+          yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+          labelTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+          hideRules
+          backgroundColor="transparent"
+          showVerticalLines={false}
+          spacing={25}
         />
       </View>
-
-      {/* Легенда: название + % + абсолютное число */}
+      
       <View style={styles.legend}>
         {labels.map((label, i) => (
           <View
@@ -109,7 +95,6 @@ export default function NegativeRadarChart({
           </View>
         ))}
       </View>
-
       <Text style={[styles.totalNote, { color: colors.textMuted }]}>
         Всего публикаций с упоминанием: {total}
       </Text>
@@ -126,6 +111,8 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingRight: 20,
   },
   legend: {
     width: '100%',
@@ -134,11 +121,11 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
+    gap: 8,
   },
   legendDot: {
     width: 10,
