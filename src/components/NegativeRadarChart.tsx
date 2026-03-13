@@ -38,8 +38,10 @@ export default function NegativeRadarChart({
     );
   }
 
-  // Логирование для отладки
-  console.log('NegativeRadarChart rendered with:', { labels, values, counts, total });
+  // Динамические цвета в зависимости от темы
+  const labelColor = mode === 'dark' ? '#b0b0b0' : '#555555';
+  const gridColor = mode === 'dark' ? '#333333' : '#e8e8e8';
+  const polygonColor = mode === 'dark' ? '#FF6B35' : '#FF4B8B';
 
   return (
     <View style={styles.container}>
@@ -48,15 +50,32 @@ export default function NegativeRadarChart({
         Распределение негативных тематик
       </Text>
 
-      {/* Сам график */}
-      <View style={styles.chartWrapper}>
+      {/* Контейнер графика с фоном */}
+      <View
+        style={[
+          styles.chartContainer,
+          {
+            backgroundColor: mode === 'dark' ? '#0f0f1e' : '#fafafa',
+            borderColor: mode === 'dark' ? '#2a2a3e' : '#e0e0e0',
+          },
+        ]}
+      >
         <RadarChart
           data={values}
           labels={labels}
-          color={mode === 'dark' ? '#FF4B8B' : '#FF6B35'}
-          labelFontSize={12}
-          labelFontWeight="600"
-          labelColor={mode === 'dark' ? '#e0e0e0' : '#333333'}
+          color={polygonColor}
+          labelFontSize={11}
+          labelFontWeight="500"
+          labelColor={labelColor}
+          strokeWidth={1.5}
+          strokeOpacity={0.6}
+          fillOpacity={0.15}
+          isLabelVisible={true}
+          showVerticalLines={true}
+          showHorizontalLines={true}
+          showLabels={true}
+          maxValue={100}
+          noOfSections={5}
         />
       </View>
 
@@ -67,7 +86,10 @@ export default function NegativeRadarChart({
             key={label}
             style={[
               styles.legendItem,
-              { backgroundColor: colors.surfaceLight, borderColor: colors.border },
+              {
+                backgroundColor: colors.surfaceLight,
+                borderColor: mode === 'dark' ? '#2a2a3e' : '#e0e0e0',
+              },
             ]}
           >
             <View
@@ -80,7 +102,12 @@ export default function NegativeRadarChart({
               {label}
             </Text>
             <View style={styles.legendNumbers}>
-              <Text style={[styles.legendPercent, { color: TOPIC_COLORS[i % TOPIC_COLORS.length] }]}>
+              <Text
+                style={[
+                  styles.legendPercent,
+                  { color: TOPIC_COLORS[i % TOPIC_COLORS.length] },
+                ]}
+              >
                 {values[i]}%
               </Text>
               <Text style={[styles.legendCount, { color: colors.textMuted }]}>
@@ -108,13 +135,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
-  chartWrapper: {
+  chartContainer: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
     paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   legend: {
     width: '100%',
@@ -123,9 +153,9 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
   },
@@ -142,19 +172,21 @@ const styles = StyleSheet.create({
   },
   legendNumbers: {
     alignItems: 'flex-end',
-    gap: 1,
+    gap: 2,
   },
   legendPercent: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   legendCount: {
     fontSize: 11,
+    fontWeight: '400',
   },
   totalNote: {
-    fontSize: 11,
+    fontSize: 12,
     textAlign: 'center',
     marginTop: Spacing.sm,
+    fontWeight: '400',
   },
   emptyContainer: {
     paddingVertical: 32,
