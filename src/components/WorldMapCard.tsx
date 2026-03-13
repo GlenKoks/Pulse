@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
 } from 'react-native';
+import { WorldMap } from 'react-native-simple-worldmap';
 import { GeoStats } from '../types';
 import { useTheme } from '../hooks/ThemeContext';
 import { formatNumber } from '../utils/dataProcessing';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 // Градации тепловой карты: 4 уровня интенсивности
+// Цвет базируется на основном акцентном цвете (#6C63FF → светлее)
 const HEAT_LEVELS = [
   { color: '#6C63FF', label: 'Очень много' },  // топ 25%
   { color: '#9B94FF', label: 'Много' },          // 25–50%
@@ -55,10 +57,28 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
     [geoStats]
   );
 
-  // Вместо визуальной карты мира используем сетку стран с тепловой подсветкой
-  const topCountries = useMemo(() => {
-    return geoStats.slice(0, 12);
-  }, [geoStats]);
+  // Группируем страны по уровням интенсивности для WorldMap
+  const heatGroups = useMemo(() => {
+    const groups: { countries: string[]; color: string }[] = [
+      { countries: [], color: (isDark ? HEAT_LEVELS_DARK : HEAT_LEVELS)[0].color },
+      { countries: [], color: (isDark ? HEAT_LEVELS_DARK : HEAT_LEVELS)[1].color },
+      { countries: [], color: (isDark ? HEAT_LEVELS_DARK : HEAT_LEVELS)[2].color },
+      { countries: [], color: (isDark ? HEAT_LEVELS_DARK : HEAT_LEVELS)[3].color },
+    ];
+    for (const stat of geoStats) {
+      const level = getLevelIndex(stat.count, maxCount);
+      groups[level].countries.push(stat.code);
+    }
+    return groups;
+  }, [geoStats, maxCount, isDark]);
+
+  // Цвет базовой карты (не упомянутые страны)
+  const baseMapColor = isDark ? '#2A2A3E' : '#D8D8E8';
+  const selectedCountryColor = '#FF6B6B';
+
+  // Для выбранной страны — красная подсветка поверх тепловой
+  // WorldMap принимает UPPERCASE коды (RU, US, CN...)
+  const selectedCountries = selectedGeo ? [selectedGeo.toUpperCase()] : [];
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -80,36 +100,50 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
         )}
       </View>
 
-      {/* Сетка стран вместо карты */}
-      <View style={styles.gridContainer}>
-        {topCountries.map((stat) => {
-          const isSelected = selectedGeo === stat.code;
-          const heatColor = getHeatColor(stat.count, maxCount, isDark);
-          return (
-            <TouchableOpacity
-              key={stat.code}
-              style={[
-                styles.countryCard,
-                {
-                  backgroundColor: isSelected ? '#FF6B6B' + '22' : heatColor + '33',
-                  borderColor: isSelected ? '#FF6B6B' : heatColor,
-                  borderWidth: isSelected ? 2 : 1,
-                },
-              ]}
-              onPress={() => onSelectGeo(isSelected ? null : stat.code)}
-            >
-              <Text style={[styles.countryCode, { color: isSelected ? '#FF6B6B' : heatColor }]}>
-                {stat.code.toUpperCase()}
-              </Text>
-              <Text style={[styles.countryName, { color: colors.text }]}>
-                {stat.name}
-              </Text>
-              <Text style={[styles.countryCount, { color: colors.textSecondary }]}>
-                {stat.count} публ.
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Карта — несколько слоёв WorldMap для тепловой подсветки */}
+      <View style={styles.mapContainer}>
+        {/* Базовая карта (все страны серым) */}
+        <View style={StyleSheet.absoluteFill}>
+          <WorldMap
+            color={baseMapColor}
+            isSelectable={false}
+          />
+        </View>
+
+        {/* Тепловые слои: от самого бледного к насыщенному */}
+        {[...heatGroups].reverse().map((group, idx) =>
+          group.countries.length > 0 ? (
+            <View key={idx} style={StyleSheet.absoluteFill} pointerEvents="none">
+              <WorldMap
+                color="transparent"
+                countries={group.countries}
+                selectedColor={group.color}
+                isSelectable={false}
+              />
+            </View>
+          ) : null
+        )}
+
+        {/* Слой выбранной страны (красный) */}
+        {selectedCountries.length > 0 && (
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <WorldMap
+              color="transparent"
+              countries={selectedCountries}
+              selectedColor={selectedCountryColor}
+              isSelectable={false}
+            />
+          </View>
+        )}
+
+        {/* Интерактивный прозрачный слой для кликов */}
+        <View style={StyleSheet.absoluteFill}>
+          <WorldMap
+            color="transparent"
+            isSelectable={true}
+            selectedColor="transparent"
+          />
+        </View>
       </View>
 
       {/* Легенда градаций */}
@@ -120,22 +154,28 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>{level.label}</Text>
           </View>
         ))}
+        {selectedGeo && (
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: selectedCountryColor }]} />
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Выбрано</Text>
+          </View>
+        )}
       </View>
 
-      {/* Кнопка показа полного списка стран */}
+      {/* Кнопка показа списка стран */}
       <TouchableOpacity
         style={[styles.toggleBtn, { borderColor: colors.border }]}
         onPress={() => setShowList(v => !v)}
       >
         <Text style={[styles.toggleBtnText, { color: colors.primary }]}>
-          {showList ? '▲ Скрыть список' : '▼ Все страны по упоминаниям'}
+          {showList ? '▲ Скрыть список' : '▼ Топ стран по упоминаниям'}
         </Text>
       </TouchableOpacity>
 
-      {/* Полный список стран с кликом для фильтра */}
+      {/* Список стран с кликом для фильтра */}
       {showList && (
         <ScrollView style={styles.list} nestedScrollEnabled>
-          {geoStats.map((stat, i) => {
+          {geoStats.slice(0, 15).map((stat, i) => {
             const isSelected = selectedGeo === stat.code;
             const heatColor = getHeatColor(stat.count, maxCount, isDark);
             return (
@@ -145,9 +185,9 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
                   styles.listItem,
                   {
                     backgroundColor: isSelected
-                      ? '#FF6B6B' + '22'
+                      ? selectedCountryColor + '22'
                       : colors.background,
-                    borderColor: isSelected ? '#FF6B6B' : colors.border,
+                    borderColor: isSelected ? selectedCountryColor : colors.border,
                   },
                 ]}
                 onPress={() => onSelectGeo(isSelected ? null : stat.code)}
@@ -158,14 +198,14 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
                 <Text style={[styles.listRank, { color: colors.textSecondary }]}>
                   {i + 1}
                 </Text>
-                <Text style={[styles.listName, { color: isSelected ? '#FF6B6B' : colors.text }]}>
+                <Text style={[styles.listName, { color: isSelected ? selectedCountryColor : colors.text }]}>
                   {stat.name}
                 </Text>
                 <Text style={[styles.listCode, { color: colors.textSecondary }]}>
                   {stat.code.toUpperCase()}
                 </Text>
                 <View style={styles.listStats}>
-                  <Text style={[styles.listCount, { color: isSelected ? '#FF6B6B' : colors.primary }]}>
+                  <Text style={[styles.listCount, { color: isSelected ? selectedCountryColor : colors.primary }]}>
                     {stat.count} публ.
                   </Text>
                   <Text style={[styles.listShows, { color: colors.textSecondary }]}>
@@ -213,35 +253,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 12,
-    gap: 8,
-    justifyContent: 'space-between',
-  },
-  countryCard: {
-    width: '31%',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    aspectRatio: 1,
-  },
-  countryCode: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  countryName: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  countryCount: {
-    fontSize: 10,
-    textAlign: 'center',
+  mapContainer: {
+    width: '100%',
+    aspectRatio: 2.0,
+    position: 'relative',
+    paddingHorizontal: 8,
   },
   legend: {
     flexDirection: 'row',
@@ -273,7 +289,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   list: {
-    maxHeight: 400,
+    maxHeight: 280,
   },
   listItem: {
     flexDirection: 'row',
