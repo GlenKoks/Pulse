@@ -16,7 +16,7 @@ import { Colors, Spacing, BorderRadius } from '../utils/theme';
 import { formatNumber, parseList } from '../utils/dataProcessing';
 
 export function NewsListScreen() {
-  const { filteredData, loading, progress } = useNewsDataContext();
+  const { filteredData, loading } = useNewsDataContext();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'shows' | 'dt' | 'likes'>('shows');
 
@@ -38,7 +38,7 @@ export function NewsListScreen() {
     });
   }, [filteredData, search, sortBy]);
 
-  if (loading) return <LoadingScreen progress={progress} />;
+  if (loading) return <LoadingScreen />;
 
   const renderItem = ({ item }: { item: NewsItem }) => {
     const topics = parseList(item.topics_verdicts_list);

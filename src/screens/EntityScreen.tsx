@@ -35,6 +35,7 @@ const DEFAULT_FILTERS: Filters = {
   persons: [],
   dateRange: null,
   selectedTopic: null,
+  selectedGeo: null,
 };
 
 const ENTITY_LABEL: Record<string, string> = {

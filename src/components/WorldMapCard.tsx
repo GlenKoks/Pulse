@@ -49,7 +49,8 @@ function getLevelIndex(count: number, maxCount: number): number {
 }
 
 export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors, mode } = useTheme();
+  const isDark = mode === 'dark';
   const [showList, setShowList] = useState(false);
 
   const maxCount = useMemo(

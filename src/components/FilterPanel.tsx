@@ -60,7 +60,7 @@ export function FilterPanel({
   };
 
   const clearAll = () => {
-    onFiltersChange({ topics: [], publishers: [], persons: [] });
+    onFiltersChange({ topics: [], publishers: [], persons: [], dateRange: null, selectedTopic: null, selectedGeo: null });
   };
 
   const filteredOptions = (type: FilterType) =>

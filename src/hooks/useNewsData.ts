@@ -22,6 +22,9 @@ export function useNewsData() {
     topics: [],
     publishers: [],
     persons: [],
+    dateRange: null,
+    selectedTopic: null,
+    selectedGeo: null,
   });
 
   const fetchAllData = useCallback(async () => {

@@ -24,7 +24,7 @@ export function DashboardScreen() {
   const {
     filteredData, filters, setFilters, resetFilters,
     dailyStats, topicStats, personStats, locationStats, companyStats,
-    wordCloud, totalShows, geoStats,
+    wordCloud, totalShows, geoStats, loading, error,
   } = useNewsDataContext();
 
   const [insightsVisible, setInsightsVisible] = useState(false);
@@ -41,21 +41,21 @@ export function DashboardScreen() {
 
     // Подготавливаем таблицу топ-персон
     const personsTable = personStats.slice(0, 10).map(p => [
-      p.person,
+      p.name,
       p.count.toString(),
       formatNumber(p.totalShows),
     ]);
 
     // Подготавливаем таблицу топ-локаций
     const locationsTable = locationStats.slice(0, 10).map(l => [
-      l.location,
+      l.name,
       l.count.toString(),
       formatNumber(l.totalShows),
     ]);
 
     // Подготавливаем таблицу топ-компаний
     const companiesTable = companyStats.slice(0, 10).map(c => [
-      c.company,
+      c.name,
       c.count.toString(),
       formatNumber(c.totalShows),
     ]);
@@ -122,6 +122,38 @@ export function DashboardScreen() {
   const handleEntityPress = (type: 'persons' | 'locations' | 'companies', name: string) => {
     navigation.navigate('Entity', { type, name });
   };
+
+  // Показываем loading экран
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+        <StatusBar
+          barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colors.background}
+        />
+        <View style={[styles.safe, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[{ marginTop: 16, color: colors.text, fontSize: 16 }]}>Загрузка данных...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Показываем ошибку если она есть
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+        <StatusBar
+          barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colors.background}
+        />
+        <View style={[styles.safe, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+          <Text style={[{ color: colors.error, fontSize: 18, fontWeight: 'bold', marginBottom: 8 }]}>Ошибка загрузки</Text>
+          <Text style={[{ color: colors.text, fontSize: 14, textAlign: 'center' }]}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
