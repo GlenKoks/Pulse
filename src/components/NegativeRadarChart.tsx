@@ -15,7 +15,7 @@ interface NegativeRadarChartProps {
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const TOPIC_COLORS = ['#FF6B35', '#FF4B8B', '#FFD93D', '#F44336'];
+const TOPIC_COLORS = ['#FF6B35', '#FF4B8B', '#FFD93D', '#F44336', '#9C27B0'];
 
 export default function NegativeRadarChart({
   labels,
@@ -25,9 +25,9 @@ export default function NegativeRadarChart({
 }: NegativeRadarChartProps) {
   const { colors, mode } = useTheme();
 
-  const chartSize = Math.min(SCREEN_WIDTH - Spacing.md * 4, 280);
+  const chartSize = Math.min(SCREEN_WIDTH - Spacing.md * 4, 300);
 
-  // Передаём проценты напрямую (0–100), maxValue=100
+  // Проверяем, есть ли данные
   const hasData = values.some(v => v > 0);
 
   if (!hasData) {
@@ -40,42 +40,29 @@ export default function NegativeRadarChart({
     );
   }
 
+  // Логирование для отладки
+  console.log('NegativeRadarChart rendered with:', { labels, values, counts, total });
+
   return (
     <View style={styles.container}>
-      <View style={styles.chartWrapper}>
+      <View style={[styles.chartWrapper, { backgroundColor: mode === 'dark' ? '#1a1a2e' : '#f9f9f9', borderRadius: 12 }]}>
         <RadarChart
           data={values}
           labels={labels}
           maxValue={100}
-          noOfSections={4}
+          noOfSections={5}
           chartSize={chartSize}
-          isAnimated
+          isAnimated={true}
           animationDuration={600}
-          labelConfig={{
-            fontSize: 12,
-            stroke: colors.textSecondary,
-            fontWeight: '600',
-          }}
-          gridConfig={{
-            stroke: colors.border,
-            strokeWidth: 1,
-            fill: mode === 'dark' ? '#1a1a2e' : '#f0f0f8',
-            opacity: 1,
-          }}
-          polygonConfig={{
-            stroke: '#FF4B8B',
-            strokeWidth: 2.5,
-            fill: '#FF4B8B',
-            opacity: 0.3,
-            gradientColor: '#FF6B35',
-            showGradient: true,
-            isAnimated: true,
-            animationDuration: 600,
-          }}
-          asterLinesConfig={{
-            stroke: colors.border,
-            strokeWidth: 1,
-          }}
+          color="#FF4B8B"
+          labelFontSize={11}
+          labelFontWeight="600"
+          strokeWidth={2}
+          strokeOpacity={0.7}
+          fillOpacity={0.25}
+          showVerticalLines={true}
+          showHorizontalLines={true}
+          showLabels={true}
         />
       </View>
 
@@ -95,7 +82,7 @@ export default function NegativeRadarChart({
                 { backgroundColor: TOPIC_COLORS[i % TOPIC_COLORS.length] },
               ]}
             />
-            <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.legendLabel, { color: colors.text }]}>
               {label}
             </Text>
             <View style={styles.legendNumbers}>
@@ -122,10 +109,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   legend: {
     width: '100%',
@@ -141,9 +133,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     flexShrink: 0,
   },
   legendLabel: {
@@ -165,6 +157,7 @@ const styles = StyleSheet.create({
   totalNote: {
     fontSize: 11,
     textAlign: 'center',
+    marginTop: Spacing.sm,
   },
   emptyContainer: {
     paddingVertical: 32,
