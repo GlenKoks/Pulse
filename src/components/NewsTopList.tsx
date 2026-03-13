@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { NewsItem } from '../types';
 import { useTheme } from '../hooks/ThemeContext';
 import { formatNumber } from '../utils/dataProcessing';
@@ -24,6 +24,12 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
     );
   }
 
+  const handleTitlePress = (url: string) => {
+    if (url) {
+      Linking.openURL(url).catch(err => console.log('Ошибка открытия ссылки:', err));
+    }
+  };
+
   return (
     <View style={styles.list}>
       {top.map((item, index) => (
@@ -35,9 +41,23 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
             <Text style={[styles.rankText, { color: colors.primary }]}>{index + 1}</Text>
           </View>
           <View style={styles.content}>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
-              {item.publication_title_name || 'Без заголовка'}
-            </Text>
+            <TouchableOpacity
+              onPress={() => handleTitlePress(item.pub_url)}
+              disabled={!item.pub_url}
+            >
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: item.pub_url ? colors.primary : colors.text,
+                    textDecorationLine: item.pub_url ? 'underline' : 'none',
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {item.publication_title_name || 'Без заголовка'}
+              </Text>
+            </TouchableOpacity>
             <View style={styles.meta}>
               {item.publisher_name && (
                 <Text style={[styles.publisher, { color: colors.textMuted }]}>
@@ -49,8 +69,16 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
                   {item.dt.substring(0, 10)}
                 </Text>
               )}
-              <Text style={[styles.shows, { color: colors.accent }]}>
+            </View>
+            <View style={styles.metrics}>
+              <Text style={[styles.metric, { color: colors.accent }]}>
                 👁 {formatNumber(item.shows || 0)}
+              </Text>
+              <Text style={[styles.metric, { color: colors.accent }]}>
+                ❤️ {formatNumber(parseInt(item.likes || '0', 10))}
+              </Text>
+              <Text style={[styles.metric, { color: colors.accent }]}>
+                💬 {formatNumber(parseInt(item.comments || '0', 10))}
               </Text>
             </View>
           </View>
@@ -96,6 +124,16 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     alignItems: 'center',
+    marginBottom: 4,
+  },
+  metrics: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  metric: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   publisher: {
     fontSize: 11,
