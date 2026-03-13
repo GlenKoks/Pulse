@@ -53,8 +53,14 @@ const NewsDataContext = createContext<NewsDataContextType | null>(null);
  * Трансформирует данные из Supabase в формат приложения
  */
 function transformSupabaseToNewsItem(item: NewsItemFromSupabase): NewsItem {
+  // Помощник для безопасного объединения массивов в строку
+  const joinList = (list: string[] | undefined) => {
+    if (!list || !Array.isArray(list) || list.length === 0) return null;
+    return list.filter(Boolean).join(', ');
+  };
+
   return {
-    bad_verdicts_list: item.bad_verdicts_list.length > 0 ? item.bad_verdicts_list.join(', ') : null,
+    bad_verdicts_list: joinList(item.bad_verdicts_list),
     comments: item.comments?.toString() || '0',
     dt: item.dt,
     likes: item.likes?.toString() || '0',
@@ -63,10 +69,10 @@ function transformSupabaseToNewsItem(item: NewsItemFromSupabase): NewsItem {
     publication_title_name: item.publication_title_name,
     publisher_name: item.publisher_name,
     shows: item.shows || 0,
-    topics_verdicts_list: item.topics_verdicts_list.length > 0 ? item.topics_verdicts_list.join(', ') : null,
-    persons: item.persons.length > 0 ? item.persons.join(', ') : null,
-    organizations: item.organizations.length > 0 ? item.organizations.join(', ') : null,
-    locations: item.locations.length > 0 ? item.locations.join(', ') : null,
+    topics_verdicts_list: joinList(item.topics_verdicts_list),
+    persons: joinList(item.persons),
+    organizations: joinList(item.organizations),
+    locations: joinList(item.locations),
     country: item.countries.length > 0 ? item.countries[0] : null,
     geo: item.countries.length > 0 ? item.countries[0] : null,
   };

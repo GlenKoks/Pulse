@@ -3,21 +3,34 @@ import { GEO_CODE_TO_NAME } from '../data/mockData';
 
 export function parseList(value: string | null): string[] {
   if (!value || value === '[]' || value === 'None' || value === 'null') return [];
-  // Comma-separated (mock data format)
-  if (!value.startsWith('[')) {
-    return value.split(',').map(s => s.trim()).filter(Boolean);
-  }
-  try {
-    const cleaned = value.replace(/'/g, '"').replace(/None/g, 'null');
-    const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) {
-      return parsed.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  
+  // Если это уже похоже на JSON массив (начинается с [)
+  if (value.trim().startsWith('[')) {
+    try {
+      // Supabase может возвращать массивы в формате JSON.
+      // Сначала пробуем стандартный JSON.parse
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map(String).filter(s => s.length > 0);
+      }
+    } catch {
+      // Если не вышло, пробуем очистить от одинарных кавычек (часто в Python/SQL логах)
+      try {
+        const cleaned = value.replace(/'/g, '"').replace(/None/g, 'null');
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed)) {
+          return parsed.map(String).filter(s => s.length > 0);
+        }
+      } catch {
+        // Последний шанс - регулярка для извлечения строк в кавычках
+        const matches = value.match(/'([^']+)'/g);
+        if (matches) return matches.map(m => m.replace(/'/g, '').trim()).filter(Boolean);
+      }
     }
-  } catch {
-    const matches = value.match(/'([^']+)'/g);
-    if (matches) return matches.map(m => m.replace(/'/g, '').trim()).filter(Boolean);
   }
-  return [];
+
+  // Если это строка через запятую (наш текущий формат из transformSupabaseToNewsItem)
+  return value.split(',').map(s => s.trim()).filter(Boolean);
 }
 
 export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
