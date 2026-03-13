@@ -20,7 +20,7 @@ import {
 } from '../utils/dataProcessing';
 import { Filters } from '../types';
 import { Spacing, BorderRadius } from '../utils/theme';
-import { usePdfExport } from '../hooks/usePdfExport';
+import { usePdfExport, PdfExportOptions } from '../hooks/usePdfExport';
 
 type RouteParams = {
   Entity: {
@@ -54,7 +54,7 @@ export function EntityScreen() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [insightsVisible, setInsightsVisible] = useState(false);
   const scrollRef = useRef<ScrollViewType>(null);
-  const { exportScreenAsPdf, loading: pdfLoading } = usePdfExport();
+  const { exportPdf, loading: pdfLoading } = usePdfExport();
 
   // Сначала фильтруем по сущности, потом по дате
   const entityData = useMemo(
@@ -85,7 +85,24 @@ export function EntityScreen() {
     : 0;
 
   const handleExportPdf = () => {
-    exportScreenAsPdf(scrollRef, `${ENTITY_LABEL[type] ?? type}: ${name}`);
+    const options: PdfExportOptions = {
+      title: `${ENTITY_LABEL[type] ?? type}: ${name}`,
+      sections: [
+        {
+          heading: 'Статистика',
+          rows: [
+            { label: 'Публикации', value: formatNumber(filteredData.length) },
+            { label: 'Охват', value: formatNumber(totalShows) },
+            { label: 'Негатив', value: `${negativePercent}%` },
+          ],
+        },
+        {
+          heading: 'Описание',
+          text: `Аналитический отчет по сущности "${name}" (${ENTITY_LABEL[type] ?? type}). Данные включают публикации за выбранный период с анализом охвата и негативного контента.`,
+        },
+      ],
+    };
+    exportPdf(options);
   };
 
   return (
