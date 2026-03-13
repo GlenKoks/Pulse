@@ -96,9 +96,18 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         setError(null);
         
         const rawData = await fetchAllNewsFromSupabase();
-        console.log('DEBUG: TOTAL ITEMS FETCHED FROM total_data:', rawData.length);
+        console.log('DEBUG: RAW DATA FROM SUPABASE:', rawData.slice(0, 2));
+        
+        if (!rawData || rawData.length === 0) {
+          console.warn('DEBUG: Supabase returned empty array');
+          setError('Supabase вернул пустой массив данных. Проверьте таблицу total_data.');
+          setAllData([]);
+          return;
+        }
         
         const transformedData = rawData.map(transformTotalDataToNewsItem);
+        console.log('DEBUG: TRANSFORMED DATA SAMPLE:', transformedData.slice(0, 2));
+        
         setAllData(transformedData);
       } catch (err) {
         console.error('Supabase Fetch Error:', err);
