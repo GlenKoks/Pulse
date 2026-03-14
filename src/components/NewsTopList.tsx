@@ -30,18 +30,14 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
     }
   };
 
-  // Маппинг негативных вердиктов на иконки
+  // Маппинг негативных вердиктов на иконки (только 5 вердиктов из RadarChart)
+  const RADAR_VERDICTS = ['Желтуха', 'Насилие', 'Трагическое', 'Политика', 'Конфликт'];
   const verdictIcons: Record<string, string> = {
     'Желтуха': '📰',
     'Насилие': '⚠️',
     'Трагическое': '😭',
     'Политика': '📝',
     'Конфликт': '⚔️',
-    '18+': '🚫',
-    'Мат': '💩',
-    'Мигранты': '🚶',
-    'Спам': '💬',
-    'Хейтспич': '💢',
   };
 
   const parseVerdicts = (verdictStr: string | null): string[] => {
@@ -89,15 +85,17 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
                 </Text>
               )}
             </View>
-            {/* Негативные вердикты */}
-            {item.bad_verdicts_list && parseVerdicts(item.bad_verdicts_list).length > 0 && (
+            {/* Негативные вердикты (только из RadarChart) */}
+            {item.bad_verdicts_list && parseVerdicts(item.bad_verdicts_list).filter(v => RADAR_VERDICTS.includes(v)).length > 0 && (
               <View style={styles.verdicts}>
-                {parseVerdicts(item.bad_verdicts_list).map((verdict, idx) => (
-                  <View key={idx} style={[styles.verdictBadge, { backgroundColor: colors.error + '22', borderColor: colors.error + '44' }]}>
-                    <Text style={styles.verdictIcon}>{verdictIcons[verdict] || '💢'}</Text>
-                    <Text style={[styles.verdictText, { color: colors.error }]}>{verdict}</Text>
-                  </View>
-                ))}
+                {parseVerdicts(item.bad_verdicts_list)
+                  .filter(v => RADAR_VERDICTS.includes(v))
+                  .map((verdict, idx) => (
+                    <View key={idx} style={[styles.verdictBadge, { backgroundColor: colors.error + '22', borderColor: colors.error + '44' }]}>
+                      <Text style={styles.verdictIcon}>{verdictIcons[verdict] || '💢'}</Text>
+                      <Text style={[styles.verdictText, { color: colors.error }]}>{verdict}</Text>
+                    </View>
+                  ))}
               </View>
             )}
             <View style={styles.metrics}>
