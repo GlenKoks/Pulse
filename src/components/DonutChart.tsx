@@ -19,6 +19,14 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
   const [metric, setMetric] = useState<Metric>('count');
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
+  // Сбрасываем focusedIndex, если данные изменились и текущий выбранный топик больше не существует
+  useEffect(() => {
+    if (selectedTopic && !top.some(d => d.topic === selectedTopic)) {
+      setFocusedIndex(null);
+      if (onTopicSelect) onTopicSelect(null);
+    }
+  }, [selectedTopic, top, onTopicSelect]);
+
   const top = data.slice(0, 10);
   const total = top.reduce((s, d) => s + (metric === 'count' ? d.count : d.totalShows), 0);
 
@@ -46,11 +54,11 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
     );
   }
 
-  const centerLabel = focusedIndex !== null
+  const centerLabel = (focusedIndex !== null && top[focusedIndex])
     ? formatNumber(metric === 'count' ? top[focusedIndex].count : top[focusedIndex].totalShows)
     : formatNumber(total);
 
-  const centerSub = focusedIndex !== null
+  const centerSub = (focusedIndex !== null && top[focusedIndex])
     ? top[focusedIndex].topic
     : (metric === 'count' ? 'публ.' : 'охват');
 
