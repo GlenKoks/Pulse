@@ -38,21 +38,19 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
     if (filters.dateRange !== null) {
       if (!item.dt) return false;
       // Парсим дату из строки YYYY-MM-DD
-      // Парсим дату публикации как локальную дату (предполагаем московское время)
-      const [year, month, day] = item.dt.substring(0, 10).split('-').map(Number);
-      const itemDate = new Date(year, month - 1, day);
-      itemDate.setHours(0, 0, 0, 0); // Устанавливаем на полночь локального времени
+      // Парсим дату публикации как UTC дату
+      const [itemYear, itemMonth, itemDay] = item.dt.substring(0, 10).split("-").map(Number);
+      const itemDate = new Date(Date.UTC(itemYear, itemMonth - 1, itemDay));
 
-      // Вычисляем дату отсечения как локальную дату (предполагаем московское время)
-      const cutoff = new Date(); // Текущая дата/время в локальной временной зоне (Москва)
-      cutoff.setDate(cutoff.getDate() - filters.dateRange);
-      cutoff.setHours(0, 0, 0, 0); // Устанавливаем на полночь локального времени
+      // Вычисляем дату отсечения как UTC дату
+      const now = new Date();
+      const cutoff = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - filters.dateRange));
 
       // Добавляем логирование для отладки сравнения дат
-      console.log(`DEBUG applyFilters: item.dt=${item.dt.substring(0, 10)}, itemDate=${itemDate.toISOString()}, cutoff=${cutoff.toISOString()}, filterRange=${filters.dateRange}`);
+      console.log(`DEBUG applyFilters: item.dt=${item.dt.substring(0, 10)}, itemDateUTC=${itemDate.toISOString()}, cutoffUTC=${cutoff.toISOString()}, filterRange=${filters.dateRange}`);
       console.log(`DEBUG applyFilters: itemDate.getTime()=${itemDate.getTime()}, cutoff.getTime()=${cutoff.getTime()}, comparison=${itemDate.getTime() < cutoff.getTime()}`);
 
-      // Сравниваем даты (метки времени в полночь локального времени)
+      // Сравниваем даты (метки времени в полночь UTC)
       if (itemDate.getTime() < cutoff.getTime()) return false;
     }
     if (filters.selectedTopic) {
