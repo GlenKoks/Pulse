@@ -91,9 +91,9 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
                 {parseVerdicts(item.bad_verdicts_list)
                   .filter(v => RADAR_VERDICTS.includes(v))
                   .map((verdict, idx) => (
-                    <View key={idx} style={[styles.verdictBadge, { backgroundColor: colors.error + '22', borderColor: colors.error + '44' }]}>
+                    <View key={idx} style={[styles.verdictBadge, { backgroundColor: '#FFD93D' + '22', borderColor: '#FFD93D' + '44' }]}>
                       <Text style={styles.verdictIcon}>{verdictIcons[verdict] || '💢'}</Text>
-                      <Text style={[styles.verdictText, { color: colors.error }]}>{verdict}</Text>
+                      <Text style={[styles.verdictText, { color: '#FFD93D' }]}>{verdict}</Text>
                     </View>
                   ))}
               </View>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: BorderRadius.md,
+    borderRadius: 4,
     borderWidth: 1,
   },
   verdictIcon: {
