@@ -19,6 +19,8 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
   const [metric, setMetric] = useState<Metric>('count');
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
+  const top = data.slice(0, 10);
+
   // Сбрасываем focusedIndex, если данные изменились и текущий выбранный топик больше не существует
   useEffect(() => {
     if (selectedTopic && !top.some(d => d.topic === selectedTopic)) {
@@ -26,8 +28,6 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
       if (onTopicSelect) onTopicSelect(null);
     }
   }, [selectedTopic, top, onTopicSelect]);
-
-  const top = data.slice(0, 10);
   const total = top.reduce((s, d) => s + (metric === 'count' ? d.count : d.totalShows), 0);
 
   const pieData = top.map((d, i) => ({
