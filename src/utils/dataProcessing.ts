@@ -34,20 +34,34 @@ export function parseList(value: string | null): string[] {
 }
 
 export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
+  // Определяем максимальную дату в данных как точку отсчета "сегодня"
+  let maxDate: Date | null = null;
+  if (filters.dateRange !== null) {
+    for (const item of data) {
+      if (item.dt) {
+        const [year, month, day] = item.dt.substring(0, 10).split("-").map(Number);
+        const itemDate = new Date(Date.UTC(year, month - 1, day));
+        if (!maxDate || itemDate > maxDate) {
+          maxDate = itemDate;
+        }
+      }
+    }
+  }
+
   return data.filter(item => {
     if (filters.dateRange !== null) {
       if (!item.dt) return false;
-      // Парсим дату из строки YYYY-MM-DD
       // Парсим дату публикации как UTC дату
       const [itemYear, itemMonth, itemDay] = item.dt.substring(0, 10).split("-").map(Number);
       const itemDate = new Date(Date.UTC(itemYear, itemMonth - 1, itemDay));
 
       // Вычисляем дату отсечения как UTC дату
-      const now = new Date();
-      const cutoff = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - filters.dateRange));
-
-      // Сравниваем даты (метки времени в полночь UTC)
-      if (itemDate.getTime() < cutoff.getTime()) return false;
+      // Отсчет от максимальной даты в данных, а не от текущего времени
+      if (maxDate) {
+        const cutoff = new Date(Date.UTC(maxDate.getUTCFullYear(), maxDate.getUTCMonth(), maxDate.getUTCDate() - filters.dateRange));
+        // Используем between как в SQL: дата должна быть >= cutoff и <= maxDate
+        if (itemDate.getTime() < cutoff.getTime() || itemDate.getTime() > maxDate.getTime()) return false;
+      }
     }
     if (filters.selectedTopic) {
       const itemTopics = parseList(item.topics_verdicts_list);
