@@ -68,7 +68,12 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
       if (!itemTopics.includes(filters.selectedTopic)) return false;
     }
     if (filters.selectedGeo) {
+      if (!item.geo) {
+        console.log(`DEBUG: Item ${item.ndx} has no geo, filtering out.`);
+        return false;
+      }
       const itemGeo = parseList(item.geo);
+      console.log(`DEBUG: Filtering by geo. Item geo: ${item.geo}, Parsed: ${itemGeo}, Selected geo: ${filters.selectedGeo}, Includes: ${itemGeo.includes(filters.selectedGeo)}`);
       if (!itemGeo.includes(filters.selectedGeo)) return false;
     }
     if (filters.topics.length > 0) {

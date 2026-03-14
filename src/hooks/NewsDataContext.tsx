@@ -104,6 +104,7 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         }
         
         const transformedData = rawData.map(transformTotalDataToNewsItem);
+        console.log("DEBUG: First 5 item.geo values from transformedData:", JSON.stringify(transformedData.slice(0, 5).map(item => item.geo)));
         
         setAllData(transformedData);
       } catch (err) {
