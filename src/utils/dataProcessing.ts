@@ -46,10 +46,6 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
       const now = new Date();
       const cutoff = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - filters.dateRange));
 
-      // Добавляем логирование для отладки сравнения дат
-      console.log(`DEBUG applyFilters: item.dt=${item.dt.substring(0, 10)}, itemDateUTC=${itemDate.toISOString()}, cutoffUTC=${cutoff.toISOString()}, filterRange=${filters.dateRange}`);
-      console.log(`DEBUG applyFilters: itemDate.getTime()=${itemDate.getTime()}, cutoff.getTime()=${cutoff.getTime()}, comparison=${itemDate.getTime() < cutoff.getTime()}`);
-
       // Сравниваем даты (метки времени в полночь UTC)
       if (itemDate.getTime() < cutoff.getTime()) return false;
     }

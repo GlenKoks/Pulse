@@ -24,18 +24,10 @@ export function DashboardScreen() {
   const {
     filteredData, filters, setFilters, resetFilters,
     dailyStats, topicStats, personStats, locationStats, companyStats,
-    wordCloud, totalShows, geoStats, loading, error, allData,
+    wordCloud, totalShows, geoStats, loading, error,
   } = useNewsDataContext();
 
-  // Отладка фильтрации
-  React.useEffect(() => {
-    console.log('DEBUG DashboardScreen:', {
-      allDataLength: allData.length,
-      filteredDataLength: filteredData.length,
-      filters,
-      dateRangeFilter: filters.dateRange,
-    });
-  }, [filters, filteredData, allData]);
+
 
   const [insightsVisible, setInsightsVisible] = useState(false);
   const scrollRef = useRef<ScrollViewType>(null);
@@ -121,8 +113,7 @@ export function DashboardScreen() {
     filters.selectedGeo !== null ||
     filters.topics.length > 0;
 
-  // Отладка: показываем количество данных
-  const debugInfo = `Всего: ${allData.length}, Фильтр: ${filters.dateRange ? filters.dateRange + ' дней' : 'нет'}, Результат: ${filteredData.length}`;
+
 
   const handleTopicSelect = (topic: string | null) => {
     setFilters({ ...filters, selectedTopic: topic });
@@ -242,14 +233,6 @@ export function DashboardScreen() {
             </View>
           )}
         </View>
-
-        {/* Debug info */}
-        {__DEV__ && (
-          <View style={[styles.card, { backgroundColor: colors.error + '11', borderColor: colors.error + '44' }]}>
-            <Text style={[styles.cardTitle, { color: colors.error, fontSize: 10 }]}>DEBUG</Text>
-            <Text style={[{ color: colors.error, fontSize: 9 }]}>{debugInfo}</Text>
-          </View>
-        )}
 
         {/* Stat cards */}
         <View style={styles.statsRow}>

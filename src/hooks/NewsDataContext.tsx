@@ -96,18 +96,14 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         setError(null);
         
         const rawData = await fetchAllNewsFromSupabase();
-        console.log('DEBUG: RAW DATA FROM SUPABASE:', rawData.slice(0, 2));
         
         if (!rawData || rawData.length === 0) {
-          console.warn('DEBUG: Supabase returned empty array');
           setError('Supabase вернул пустой массив данных. Проверьте таблицу total_data.');
           setAllData([]);
           return;
         }
         
-         const transformedData = rawData.map(transformTotalDataToNewsItem);
-      console.log("DEBUG: TRANSFORMED DATA SAMPLE:", transformedData.slice(0, 2));
-      console.log("DEBUG: First 5 item.dt values from transformedData:", JSON.stringify(transformedData.slice(0, 5).map(item => item.dt)));
+        const transformedData = rawData.map(transformTotalDataToNewsItem);
         
         setAllData(transformedData);
       } catch (err) {
@@ -123,12 +119,7 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
     loadData();
   }, []);
 
-  const filteredData = useMemo(() => {
-    console.log("DEBUG: applyFilters triggered with filters:", JSON.stringify(filters));
-    const result = applyFilters(allData, filters);
-    console.log("DEBUG: applyFilters result length:", result.length);
-    return result;
-  }, [allData, filters]);
+  const filteredData = useMemo(() => applyFilters(allData, filters), [allData, filters]);
 
   const value = useMemo(() => ({
     allData,
