@@ -38,16 +38,18 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
     if (filters.dateRange !== null) {
       if (!item.dt) return false;
       // Парсим дату из строки YYYY-MM-DD
-      // Получаем дату публикации в формате YYYY-MM-DD
-      const itemDateStr = item.dt.substring(0, 10);
-      
-      // Вычисляем дату отсечения (cutoff) в формате YYYY-MM-DD
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - filters.dateRange);
-      const cutoffDateStr = cutoffDate.toISOString().substring(0, 10);
-      
-      // Сравниваем даты как строки YYYY-MM-DD
-      if (itemDateStr < cutoffDateStr) return false;
+      // Парсим дату публикации как локальную дату (предполагаем московское время)
+      const [year, month, day] = item.dt.substring(0, 10).split('-').map(Number);
+      const itemDate = new Date(year, month - 1, day);
+      itemDate.setHours(0, 0, 0, 0); // Устанавливаем на полночь локального времени
+
+      // Вычисляем дату отсечения как локальную дату (предполагаем московское время)
+      const cutoff = new Date(); // Текущая дата/время в локальной временной зоне (Москва)
+      cutoff.setDate(cutoff.getDate() - filters.dateRange);
+      cutoff.setHours(0, 0, 0, 0); // Устанавливаем на полночь локального времени
+
+      // Сравниваем даты (метки времени в полночь локального времени)
+      if (itemDate.getTime() < cutoff.getTime()) return false;
     }
     if (filters.selectedTopic) {
       const itemTopics = parseList(item.topics_verdicts_list);
