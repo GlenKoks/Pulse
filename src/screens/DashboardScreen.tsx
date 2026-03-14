@@ -11,6 +11,7 @@ import { MetricLineChart } from '../components/MetricLineChart';
 import { DonutChart } from '../components/DonutChart';
 import { WordCloud } from '../components/WordCloud';
 import { EntityRanking } from '../components/EntityRanking';
+import { NewsTopList } from '../components/NewsTopList';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
 import WorldMapCard from '../components/WorldMapCard';
@@ -30,6 +31,7 @@ export function DashboardScreen() {
 
 
   const [insightsVisible, setInsightsVisible] = useState(false);
+  const [newsLimit, setNewsLimit] = useState(10);
   const scrollRef = useRef<ScrollViewType>(null);
   const { exportPdf, loading: pdfLoading } = usePdfExport();
 
@@ -291,6 +293,28 @@ export function DashboardScreen() {
             onEntityPress={handleEntityPress}
           />
         </View>
+
+        {/* Top News List */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Топ публикаций</Text>
+          <Text style={[styles.cardSub, { color: colors.textSecondary }]}>По суммарному охвату</Text>
+          <NewsTopList data={filteredData} limit={newsLimit} />
+          
+          {filteredData.length > newsLimit && newsLimit < 100 && (
+            <TouchableOpacity 
+              style={[styles.moreBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '44' }]}
+              onPress={() => setNewsLimit(prev => Math.min(prev + 10, 100))}
+            >
+              <Text style={[styles.moreBtnText, { color: colors.primary }]}>Показать еще 10</Text>
+            </TouchableOpacity>
+          )}
+          
+          {newsLimit >= 100 && (
+            <Text style={[styles.limitNote, { color: colors.textMuted }]}>
+              Показаны топ-100 публикаций
+            </Text>
+          )}
+        </View>
       </ScrollView>
 
       <InsightsModal visible={insightsVisible} onClose={() => setInsightsVisible(false)} />
@@ -328,14 +352,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: Spacing.sm,
+    marginTop: Spacing.  resetBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: BorderRadius.md,
+    borderRadius: 6,
     borderWidth: 1,
   },
-  geoFilterText: { fontSize: 13, fontWeight: '600' },
-  geoFilterClose: { fontSize: 16, fontWeight: '700', paddingLeft: 8 },
+  resetText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  moreBtn: {
+    marginTop: Spacing.md,
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  limitNote: {
+    marginTop: Spacing.md,
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },geoFilterClose: { fontSize: 16, fontWeight: '700', paddingLeft: 8 },
   statsRow: { flexDirection: 'row', gap: Spacing.sm },
   statCard: { flex: 1, borderRadius: BorderRadius.md, padding: Spacing.md, borderWidth: 1, borderLeftWidth: 3 },
   statLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },
