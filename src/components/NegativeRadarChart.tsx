@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { RadarChart } from 'react-native-gifted-charts';
 import { useTheme } from '../hooks/ThemeContext';
 import { Spacing } from '../utils/theme';
@@ -38,6 +38,10 @@ export default function NegativeRadarChart({
     );
   }
 
+  // На iPhone (iOS) RadarChart вызывает ошибку типизации в Fabric, 
+  // поэтому показываем его только в Web или Android (если применимо).
+  const showChart = Platform.OS === 'web';
+
   return (
     <View style={styles.container}>
       {/* Заголовок */}
@@ -45,11 +49,20 @@ export default function NegativeRadarChart({
         Распределение негативных тематик
       </Text>
 
-      {/* Контейнер графика (заменен на список из-за несовместимости RadarChart с Fabric) */}
+      {/* Контейнер графика */}
       <View style={[styles.chartWrapper, { paddingVertical: Spacing.md }]}>
-        <Text style={{ color: colors.textMuted, fontSize: 12, fontStyle: 'italic' }}>
-          График временно недоступен. См. статистику ниже.
-        </Text>
+        {showChart ? (
+          <RadarChart
+            data={values}
+            labels={labels}
+          />
+        ) : (
+          <View style={styles.fallbackBox}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontStyle: 'italic', textAlign: 'center' }}>
+              График доступен в веб-версии.{"\n"}См. подробную статистику ниже.
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Легенда: название + % + абсолютное число */}
@@ -111,7 +124,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingVertical: Spacing.lg,
+    minHeight: 180,
+  },
+  fallbackBox: {
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#ccc',
+    width: '80%',
   },
   legend: {
     width: '100%',
