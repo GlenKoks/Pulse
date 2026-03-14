@@ -45,12 +45,11 @@ export default function NegativeRadarChart({
         Распределение негативных тематик
       </Text>
 
-      {/* Контейнер графика */}
-      <View style={styles.chartWrapper}>
-        <RadarChart
-          data={values}
-          labels={labels}
-        />
+      {/* Контейнер графика (заменен на список из-за несовместимости RadarChart с Fabric) */}
+      <View style={[styles.chartWrapper, { paddingVertical: Spacing.md }]}>
+        <Text style={{ color: colors.textMuted, fontSize: 12, fontStyle: 'italic' }}>
+          График временно недоступен. См. статистику ниже.
+        </Text>
       </View>
 
       {/* Легенда: название + % + абсолютное число */}

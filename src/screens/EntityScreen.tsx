@@ -191,7 +191,7 @@ export function EntityScreen() {
         ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={false as any}
       >
         {/* Date filters */}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>

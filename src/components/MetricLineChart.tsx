@@ -56,7 +56,7 @@ export function MetricLineChart({ data }: MetricLineChartProps) {
           data={chartData}
           width={screenWidth - 80}
           height={180}
-          curved
+          curved={true as any}
           color={colors.primary}
           thickness={2}
           dataPointsColor={colors.primary}
@@ -65,7 +65,7 @@ export function MetricLineChart({ data }: MetricLineChartProps) {
           endFillColor={colors.primary}
           startOpacity={0.25}
           endOpacity={0.02}
-          areaChart
+          areaChart={true as any}
           hideDataPoints={chartData.length > 15}
           xAxisColor={colors.border}
           yAxisColor={colors.border}
@@ -75,10 +75,10 @@ export function MetricLineChart({ data }: MetricLineChartProps) {
           maxValue={maxVal * 1.2}
           rulesColor={colors.border}
           rulesType="solid"
-          showVerticalLines={false}
+          showVerticalLines={false as any}
           yAxisLabelWidth={50}
           formatYLabel={(v) => formatNumber(Number(v))}
-          hideYAxisText={false}
+          hideYAxisText={false as any}
           backgroundColor="transparent"
           initialSpacing={10}
           spacing={Math.max(20, (screenWidth - 120) / Math.max(chartData.length, 1))}

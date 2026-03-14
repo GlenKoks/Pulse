@@ -17,7 +17,7 @@ export default function App() {
         <ThemeProvider>
           <NewsDataProvider>
             <NavigationContainer>
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Navigator screenOptions={{ headerShown: false as any }}>
                 <Stack.Screen name="Dashboard" component={DashboardScreen} />
                 <Stack.Screen name="Entity" component={EntityScreen} />
               </Stack.Navigator>

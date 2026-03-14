@@ -84,7 +84,7 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
         <View style={styles.chartContainer}>
           <PieChart
             data={pieData}
-            donut
+            donut={true as any}
             radius={80}
             innerRadius={52}
             innerCircleColor={colors.surface}
@@ -99,16 +99,16 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
               </View>
             )}
             onPress={(_item: any, index: number) => handlePress(index)}
-            focusOnPress
-            toggleFocusOnPress
-            showGradient={false}
+            focusOnPress={true as any}
+            toggleFocusOnPress={true as any}
+            showGradient={false as any}
             strokeWidth={1}
             strokeColor={colors.surface}
           />
         </View>
 
         {/* Legend */}
-        <ScrollView style={styles.legend} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+        <ScrollView style={styles.legend} showsVerticalScrollIndicator={false as any} nestedScrollEnabled={true as any}>
           {top.map((d, i) => {
             const isSelected = selectedTopic === d.topic;
             return (

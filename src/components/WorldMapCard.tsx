@@ -107,7 +107,7 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
         <View style={StyleSheet.absoluteFill}>
           <WorldMap
             color={baseMapColor}
-            isSelectable={false}
+            isSelectable={false as any}
           />
         </View>
 
@@ -119,7 +119,7 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
                 color="transparent"
                 countries={group.countries}
                 selectedColor={group.color}
-                isSelectable={false}
+                isSelectable={false as any}
               />
             </View>
           ) : null
@@ -132,7 +132,7 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
               color="transparent"
               countries={selectedCountries}
               selectedColor={selectedCountryColor}
-              isSelectable={false}
+              isSelectable={false as any}
             />
           </View>
         )}
@@ -141,7 +141,7 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
         <View style={StyleSheet.absoluteFill}>
           <WorldMap
             color="transparent"
-            isSelectable={true}
+            isSelectable={true as any}
             selectedColor="transparent"
           />
         </View>
@@ -175,7 +175,7 @@ export default function WorldMapCard({ geoStats, selectedGeo, onSelectGeo }: Pro
 
       {/* Список стран с кликом для фильтра */}
       {showList && (
-        <ScrollView style={styles.list} nestedScrollEnabled>
+        <ScrollView style={styles.list} nestedScrollEnabled={true as any}>
           {geoStats.slice(0, 15).map((stat, i) => {
             const isSelected = selectedGeo === stat.code;
             const heatColor = getHeatColor(stat.count, maxCount, isDark);
