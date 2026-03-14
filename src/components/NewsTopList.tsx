@@ -30,6 +30,25 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
     }
   };
 
+  // Маппинг негативных вердиктов на иконки
+  const verdictIcons: Record<string, string> = {
+    'Желтуха': '📰',
+    'Насилие': '⚠️',
+    'Трагическое': '😭',
+    'Политика': '📝',
+    'Конфликт': '⚔️',
+    '18+': '🚫',
+    'Мат': '💩',
+    'Мигранты': '🚶',
+    'Спам': '💬',
+    'Хейтспич': '💢',
+  };
+
+  const parseVerdicts = (verdictStr: string | null): string[] => {
+    if (!verdictStr) return [];
+    return verdictStr.split(',').map(v => v.trim()).filter(Boolean);
+  };
+
   return (
     <View style={styles.list}>
       {top.map((item, index) => (
@@ -44,13 +63,13 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
             <TouchableOpacity
               onPress={() => handleTitlePress(item.pub_url)}
               disabled={!item.pub_url}
+              style={styles.titleContainer}
             >
               <Text
                 style={[
                   styles.title,
                   {
-                    color: item.pub_url ? colors.primary : colors.text,
-                    textDecorationLine: item.pub_url ? 'underline' : 'none',
+                    color: colors.text,
                   },
                 ]}
                 numberOfLines={2}
@@ -70,6 +89,17 @@ export function NewsTopList({ data, limit = 10 }: NewsTopListProps) {
                 </Text>
               )}
             </View>
+            {/* Негативные вердикты */}
+            {item.bad_verdicts_list && parseVerdicts(item.bad_verdicts_list).length > 0 && (
+              <View style={styles.verdicts}>
+                {parseVerdicts(item.bad_verdicts_list).map((verdict, idx) => (
+                  <View key={idx} style={[styles.verdictBadge, { backgroundColor: colors.error + '22', borderColor: colors.error + '44' }]}>
+                    <Text style={styles.verdictIcon}>{verdictIcons[verdict] || '💢'}</Text>
+                    <Text style={[styles.verdictText, { color: colors.error }]}>{verdict}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             <View style={styles.metrics}>
               <Text style={[styles.metric, { color: colors.accent }]}>
                 👁 {formatNumber(item.shows || 0)}
@@ -114,6 +144,9 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  titleContainer: {
+    paddingRight: 8,
+  },
   title: {
     fontSize: 13,
     fontWeight: '500',
@@ -125,6 +158,28 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     marginBottom: 4,
+  },
+  verdicts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 4,
+  },
+  verdictBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  verdictIcon: {
+    fontSize: 12,
+  },
+  verdictText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   metrics: {
     flexDirection: 'row',
