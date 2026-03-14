@@ -107,7 +107,7 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
         
          const transformedData = rawData.map(transformTotalDataToNewsItem);
       console.log("DEBUG: TRANSFORMED DATA SAMPLE:", transformedData.slice(0, 2));
-      console.log("DEBUG: First 5 item.dt values from transformedData:", transformedData.slice(0, 5).map(item => item.dt));;
+      console.log("DEBUG: First 5 item.dt values from transformedData:", JSON.stringify(transformedData.slice(0, 5).map(item => item.dt)));
         
         setAllData(transformedData);
       } catch (err) {
@@ -124,7 +124,7 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const filteredData = useMemo(() => {
-    console.log("DEBUG: applyFilters triggered with filters:", filters);
+    console.log("DEBUG: applyFilters triggered with filters:", JSON.stringify(filters));
     const result = applyFilters(allData, filters);
     console.log("DEBUG: applyFilters result length:", result.length);
     return result;
