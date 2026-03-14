@@ -69,12 +69,10 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
     }
     if (filters.selectedGeo) {
       if (!item.geo) {
-        console.log(`DEBUG: Item ${item.ndx} has no geo, filtering out.`);
         return false;
       }
-      const itemGeo = parseList(item.geo);
-      console.log(`DEBUG: Filtering by geo. Item geo: ${item.geo}, Parsed: ${itemGeo}, Selected geo: ${filters.selectedGeo}, Includes: ${itemGeo.includes(filters.selectedGeo)}`);
-      if (!itemGeo.includes(filters.selectedGeo)) return false;
+      const itemGeo = parseList(item.geo.toUpperCase()); // Приводим к верхнему регистру
+      if (!itemGeo.includes(filters.selectedGeo.toUpperCase())) return false; // Сравниваем в верхнем регистре
     }
     if (filters.topics.length > 0) {
       const itemTopics = parseList(item.topics_verdicts_list);
