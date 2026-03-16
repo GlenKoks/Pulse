@@ -14,6 +14,7 @@ import { EntityRanking } from '../components/EntityRanking';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
 import WorldMapCard from '../components/WorldMapCard';
+import { NewsTopList } from '../components/NewsTopList';
 import { formatNumber } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
 import { usePdfExport, PdfExportOptions } from '../hooks/usePdfExport';
@@ -27,9 +28,8 @@ export function DashboardScreen() {
     wordCloud, totalShows, geoStats, loading, error,
   } = useNewsDataContext();
 
-
-
   const [insightsVisible, setInsightsVisible] = useState(false);
+  const [topLimit, setTopLimit] = useState(10);
   const scrollRef = useRef<ScrollViewType>(null);
   const { exportPdf, loading: pdfLoading } = usePdfExport();
 
@@ -290,6 +290,31 @@ export function DashboardScreen() {
             companies={companyStats}
             onEntityPress={handleEntityPress}
           />
+        </View>
+
+        {/* Top News */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Топ публикаций</Text>
+          <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+            По суммарному охвату
+          </Text>
+          <NewsTopList data={filteredData} limit={topLimit} />
+          {topLimit < 100 && filteredData.length > topLimit && (
+            <TouchableOpacity
+              style={[styles.moreBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.border }]}
+              onPress={() => setTopLimit(100)}
+            >
+              <Text style={[styles.moreBtnText, { color: colors.primary }]}>Показать топ-100</Text>
+            </TouchableOpacity>
+          )}
+          {topLimit === 100 && (
+            <TouchableOpacity
+              style={[styles.moreBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.border }]}
+              onPress={() => setTopLimit(10) }
+            >
+              <Text style={[styles.moreBtnText, { color: colors.textSecondary }]}>Свернуть до топ-10</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
