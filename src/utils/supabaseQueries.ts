@@ -3,20 +3,42 @@ import { NewsItem } from '../types';
 
 /**
  * Загружает все данные из таблицы total_data и маппинг стран
+ * Использует пагинацию для загрузки всех записей (Supabase ограничивает ответ до 1000 строк по умолчанию)
  */
 export async function fetchAllNewsFromSupabase(): Promise<any[]> {
   console.log('Fetching data from total_data...');
   
-  // 1. Загружаем основные данные из total_data
-  const { data: totalData, error: totalErr } = await supabase
-    .from('total_data')
-    .select('*')
-    .order('dt', { ascending: false });
+  const PAGE_SIZE = 1000;
+  const allData: any[] = [];
+  let page = 0;
+  let hasMore = true;
+  
+  // 1. Загружаем основные данные из total_data с пагинацией
+  while (hasMore) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    
+    const { data: pageData, error: totalErr } = await supabase
+      .from('total_data')
+      .select('*')
+      .order('dt', { ascending: false })
+      .range(from, to);
 
-  if (totalErr) {
-    console.error('Error fetching total_data:', totalErr);
-    throw totalErr;
+    if (totalErr) {
+      console.error('Error fetching total_data page', page, ':', totalErr);
+      throw totalErr;
+    }
+    
+    if (!pageData || pageData.length === 0) {
+      hasMore = false;
+    } else {
+      allData.push(...pageData);
+      console.log(`Loaded page ${page}: ${pageData.length} items (total: ${allData.length})`);
+      page++;
+    }
   }
+  
+  const totalData = allData;
 
   // 2. Загружаем маппинг стран
   const { data: countryMapping, error: mapErr } = await supabase
