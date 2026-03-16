@@ -30,13 +30,17 @@ export function DonutChart({ data, onTopicSelect, selectedTopic }: DonutChartPro
   }, [selectedTopic, top, onTopicSelect]);
   const total = top.reduce((s, d) => s + (metric === 'count' ? d.count : d.totalShows), 0);
 
-  const pieData = top.map((d, i) => ({
-    value: metric === 'count' ? d.count : d.totalShows,
-    color: colors.chartColors[i % colors.chartColors.length],
-    text: '',
-    focused: focusedIndex === i,
-    topic: d.topic,
-  }));
+  const pieData = top.map((d, i) => {
+    const color = colors.chartColors[i % colors.chartColors.length];
+    return {
+      value: metric === 'count' ? d.count : d.totalShows,
+      color: color,
+      focusedPieColor: color, // Сохраняем тот же цвет при фокусе
+      text: '',
+      focused: focusedIndex === i,
+      topic: d.topic,
+    };
+  });
 
   const handlePress = (index: number) => {
     const newFocus = focusedIndex === index ? null : index;

@@ -343,4 +343,15 @@ const styles = StyleSheet.create({
   card: { borderRadius: BorderRadius.lg, padding: Spacing.md, borderWidth: 1, gap: 4 },
   cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardSub: { fontSize: 12, marginBottom: Spacing.sm },
+  moreBtn: {
+    marginTop: Spacing.md,
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  moreBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
