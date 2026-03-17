@@ -35,12 +35,13 @@ export function parseList(value: string | null): string[] {
 
 export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
   // Определяем максимальную дату в данных как точку отсчета "сегодня"
+  // Мы используем фиксированную дату конца дня, чтобы избежать проблем с часовыми поясами
   let maxDate: Date | null = null;
   if (filters.dateRange !== null) {
     for (const item of data) {
       if (item.dt) {
-        const [year, month, day] = item.dt.substring(0, 10).split("-").map(Number);
-        const itemDate = new Date(Date.UTC(year, month - 1, day));
+        const datePart = item.dt.substring(0, 10);
+        const itemDate = new Date(datePart + 'T00:00:00Z');
         if (!maxDate || itemDate > maxDate) {
           maxDate = itemDate;
         }
@@ -49,19 +50,16 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
   }
 
   return data.filter(item => {
-    if (filters.dateRange !== null) {
+    if (filters.dateRange !== null && maxDate) {
       if (!item.dt) return false;
-      // Парсим дату публикации как UTC дату
-      const [itemYear, itemMonth, itemDay] = item.dt.substring(0, 10).split("-").map(Number);
-      const itemDate = new Date(Date.UTC(itemYear, itemMonth - 1, itemDay));
+      const itemDate = new Date(item.dt.substring(0, 10) + 'T00:00:00Z');
 
-      // Вычисляем дату отсечения как UTC дату
-      // Отсчет от максимальной даты в данных, а не от текущего времени
-      if (maxDate) {
-        const cutoff = new Date(Date.UTC(maxDate.getUTCFullYear(), maxDate.getUTCMonth(), maxDate.getUTCDate() - filters.dateRange));
-        // Используем between как в SQL: дата должна быть >= cutoff и <= maxDate
-        if (itemDate.getTime() < cutoff.getTime() || itemDate.getTime() > maxDate.getTime()) return false;
-      }
+      // Вычисляем дату отсечения
+      // Например, если dateRange = 7, мы берем последние 7 дней включая "сегодня" (maxDate)
+      const cutoff = new Date(maxDate.getTime());
+      cutoff.setUTCDate(maxDate.getUTCDate() - (filters.dateRange - 1));
+      
+      if (itemDate < cutoff || itemDate > maxDate) return false;
     }
     if (filters.selectedTopic) {
       const itemTopics = parseList(item.topics_verdicts_list);
