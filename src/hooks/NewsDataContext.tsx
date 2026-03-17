@@ -94,17 +94,50 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
       try {
         setLoading(true);
         setError(null);
+
+        // Попытка загрузить из кэша (только для веба)
+        const CACHE_KEY = 'pulse_news_cache';
+        const CACHE_TIME_KEY = 'pulse_news_cache_time';
+        const CACHE_TTL = 1000 * 60 * 30; // 30 минут
+
+        try {
+          const cached = localStorage.getItem(CACHE_KEY);
+          const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+          
+          if (cached && cachedTime) {
+            const isExpired = Date.now() - parseInt(cachedTime, 10) > CACHE_TTL;
+            if (!isExpired) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                console.log(`DEBUG: Loaded ${parsed.length} items from cache`);
+                setAllData(parsed);
+                setLoading(false);
+                // Продолжаем загрузку в фоне для обновления данных
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Cache load failed', e);
+        }
         
         const rawData = await fetchAllNewsFromSupabase();
         
         if (!rawData || rawData.length === 0) {
-          setError('Supabase вернул пустой массив данных. Проверьте таблицу total_data.');
-          setAllData([]);
+          if (allData.length === 0) {
+            setError('Supabase вернул пустой массив данных. Проверьте таблицу total_data.');
+          }
           return;
         }
         
         const transformedData = rawData.map(transformTotalDataToNewsItem);
-        console.log("DEBUG: First 5 item.geo values from transformedData:", JSON.stringify(transformedData.slice(0, 5).map(item => item.geo)));
+        
+        // Сохранение в кэш
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(transformedData));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        } catch (e) {
+          console.warn('Cache save failed', e);
+        }
         
         setAllData(transformedData);
       } catch (err) {
@@ -138,7 +171,7 @@ export function NewsDataProvider({ children }: { children: React.ReactNode }) {
     publisherStats: getPublisherStats(filteredData),
     badVerdictStats: getBadVerdictStats(filteredData),
     wordCloud: getWordCloud(filteredData),
-    geoStats: getGeoStats(allData),
+    geoStats: getGeoStats(filteredData), // Использовать filteredData для обновления карты
     totalShows: filteredData.reduce((sum, item) => sum + (item.shows || 0), 0),
     totalLikes: filteredData.reduce((sum, item) => sum + parseInt(item.likes || '0', 10), 0),
     totalComments: filteredData.reduce((sum, item) => sum + parseInt(item.comments || '0', 10), 0),
