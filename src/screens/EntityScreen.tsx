@@ -232,7 +232,7 @@ export function EntityScreen() {
         </View>
 
         {/* Wikipedia card — только для персон */}
-        {type === 'persons' && (
+        {(type === 'persons' || type === 'companies') && (
           <WikipediaCard name={name} />
         )}
 
