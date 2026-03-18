@@ -21,6 +21,9 @@ const DEFAULT_FILTERS: Filters = {
   dateRange: null,
   selectedTopic: null,
   selectedGeo: null,
+  selectedPerson: null,
+  selectedLocation: null,
+  selectedCompany: null,
 };
 
 interface NewsDataContextType {

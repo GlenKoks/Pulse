@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { ActivityIndicator } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar,
@@ -15,7 +15,7 @@ import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
 import WorldMapCard from '../components/WorldMapCard';
 import { NewsTopList } from '../components/NewsTopList';
-import { formatNumber } from '../utils/dataProcessing';
+import { formatNumber, getPersonStats, getLocationStats, getCompanyStats } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
 import { usePdfExport, PdfExportOptions } from '../hooks/usePdfExport';
 
@@ -23,7 +23,7 @@ export function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { colors, mode, toggle } = useTheme();
   const {
-    filteredData, filters, setFilters, resetFilters,
+    allData, filteredData, filters, setFilters, resetFilters,
     dailyStats, topicStats, personStats, locationStats, companyStats,
     wordCloud, totalShows, geoStats, loading, error,
   } = useNewsDataContext();
@@ -126,6 +126,18 @@ export function DashboardScreen() {
   const handleEntityPress = (type: 'persons' | 'locations' | 'companies', name: string) => {
     navigation.navigate('Entity', { type, name });
   };
+
+  const handleEntitySelect = (type: 'persons' | 'locations' | 'companies', name: string) => {
+    const newFilters = { ...filters };
+    if (type === 'persons') newFilters.selectedPerson = name;
+    else if (type === 'locations') newFilters.selectedLocation = name;
+    else if (type === 'companies') newFilters.selectedCompany = name;
+    setFilters(newFilters);
+  };
+
+  const allPersons = useMemo(() => getPersonStats(allData).slice(0, 1000), [allData]);
+  const allLocations = useMemo(() => getLocationStats(allData).slice(0, 1000), [allData]);
+  const allCompanies = useMemo(() => getCompanyStats(allData).slice(0, 1000), [allData]);
 
   // Показываем loading экран
   if (loading) {
@@ -232,6 +244,39 @@ export function DashboardScreen() {
               </TouchableOpacity>
             </View>
           )}
+          {/* Активный фильтр по персоне */}
+          {filters.selectedPerson && (
+            <View style={[styles.geoFilterBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '44' }]}>
+              <Text style={[styles.geoFilterText, { color: colors.primary }]}>
+                👤 Персона: {filters.selectedPerson}
+              </Text>
+              <TouchableOpacity onPress={() => setFilters({ ...filters, selectedPerson: null })}>
+                <Text style={[styles.geoFilterClose, { color: colors.primary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {/* Активный фильтр по локации */}
+          {filters.selectedLocation && (
+            <View style={[styles.geoFilterBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '44' }]}>
+              <Text style={[styles.geoFilterText, { color: colors.primary }]}>
+                📍 Локация: {filters.selectedLocation}
+              </Text>
+              <TouchableOpacity onPress={() => setFilters({ ...filters, selectedLocation: null })}>
+                <Text style={[styles.geoFilterClose, { color: colors.primary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {/* Активный фильтр по компании */}
+          {filters.selectedCompany && (
+            <View style={[styles.geoFilterBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '44' }]}>
+              <Text style={[styles.geoFilterText, { color: colors.primary }]}>
+                🏢 Компания: {filters.selectedCompany}
+              </Text>
+              <TouchableOpacity onPress={() => setFilters({ ...filters, selectedCompany: null })}>
+                <Text style={[styles.geoFilterClose, { color: colors.primary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Stat cards */}
@@ -288,7 +333,11 @@ export function DashboardScreen() {
             persons={personStats}
             locations={locationStats}
             companies={companyStats}
+            allPersons={allPersons}
+            allLocations={allLocations}
+            allCompanies={allCompanies}
             onEntityPress={handleEntityPress}
+            onEntitySelect={handleEntitySelect}
           />
         </View>
 

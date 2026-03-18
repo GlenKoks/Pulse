@@ -59,6 +59,9 @@ export interface Filters {
   dateRange: 2 | 7 | 30 | null;
   selectedTopic: string | null;
   selectedGeo: string | null; // ISO 3166-1 alpha-2 код страны для фильтра
+  selectedPerson: string | null;
+  selectedLocation: string | null;
+  selectedCompany: string | null;
 }
 
 export type EntityType = 'persons' | 'locations' | 'companies';

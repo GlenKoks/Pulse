@@ -83,6 +83,18 @@ export function applyFilters(data: NewsItem[], filters: Filters): NewsItem[] {
       const itemPersons = parseList(item.persons);
       if (!filters.persons.some(p => itemPersons.includes(p))) return false;
     }
+    if (filters.selectedPerson) {
+      const itemPersons = parseList(item.persons);
+      if (!itemPersons.includes(filters.selectedPerson)) return false;
+    }
+    if (filters.selectedLocation) {
+      const itemLocations = parseList(item.locations);
+      if (!itemLocations.includes(filters.selectedLocation)) return false;
+    }
+    if (filters.selectedCompany) {
+      const itemCompanies = parseList(item.organizations);
+      if (!itemCompanies.includes(filters.selectedCompany)) return false;
+    }
     return true;
   });
 }

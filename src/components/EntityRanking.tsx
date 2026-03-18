@@ -10,7 +10,11 @@ interface EntityRankingProps {
   persons: EntityStats[];
   locations: EntityStats[];
   companies: EntityStats[];
+  allPersons?: EntityStats[];
+  allLocations?: EntityStats[];
+  allCompanies?: EntityStats[];
   onEntityPress: (type: 'persons' | 'locations' | 'companies', name: string) => void;
+  onEntitySelect: (type: 'persons' | 'locations' | 'companies', name: string) => void;
 }
 
 type Tab = 'persons' | 'locations' | 'companies';
@@ -21,11 +25,13 @@ const TAB_LABELS: Record<Tab, string> = {
   companies: 'Компании',
 };
 
-export function EntityRanking({ persons, locations, companies, onEntityPress }: EntityRankingProps) {
+export function EntityRanking(props: EntityRankingProps) {
+  const { persons, locations, companies, onEntityPress } = props;
   const { colors } = useTheme();
   const [tab, setTab] = useState<Tab>('persons');
 
   const data: EntityStats[] = tab === 'persons' ? persons : tab === 'locations' ? locations : companies;
+  const searchData: EntityStats[] = tab === 'persons' ? (props.allPersons || persons) : tab === 'locations' ? (props.allLocations || locations) : (props.allCompanies || companies);
   const top10 = data.slice(0, 10);
 
   return (
@@ -48,8 +54,8 @@ export function EntityRanking({ persons, locations, companies, onEntityPress }: 
       {/* Search component */}
       <EntitySearch 
         type={tab} 
-        data={data} 
-        onSelect={(name) => onEntityPress(tab, name)} 
+        data={searchData} 
+        onSelect={(name) => props.onEntitySelect(tab, name)} 
       />
 
       {/* List */}
