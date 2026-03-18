@@ -287,7 +287,20 @@ export function EntityScreen() {
         </View>
       </ScrollView>
 
-      <InsightsModal visible={insightsVisible} onClose={() => setInsightsVisible(false)} />
+      <InsightsModal 
+        visible={insightsVisible} 
+        onClose={() => setInsightsVisible(false)} 
+        entityType={type}
+        entityName={name}
+        overrideData={{
+          filteredData,
+          totalShows,
+          dailyStats,
+          wordCloud,
+          negativeRadarData,
+          filters
+        }}
+      />
     </SafeAreaView>
   );
 }

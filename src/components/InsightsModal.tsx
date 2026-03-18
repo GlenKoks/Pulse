@@ -11,6 +11,18 @@ import { Spacing, BorderRadius } from '../utils/theme';
 interface InsightsModalProps {
   visible: boolean;
   onClose: () => void;
+  // Опциональные пропсы для передачи контекста сущности
+  entityType?: 'persons' | 'locations' | 'companies';
+  entityName?: string;
+  // Опциональные пропсы для передачи отфильтрованных данных (если не из контекста)
+  overrideData?: {
+    filteredData: any[];
+    totalShows: number;
+    dailyStats?: any[];
+    wordCloud?: any[];
+    negativeRadarData?: any;
+    filters?: any;
+  };
 }
 
 const API_URL = 'https://pulseai-gcx9.onrender.com/insights';
@@ -23,9 +35,29 @@ const STUB_TEXT =
   'Уровень негативных вердиктов находится в пределах нормы. ' +
   'Рекомендуется усилить мониторинг публикаций с признаками манипуляции.';
 
-export function InsightsModal({ visible, onClose }: InsightsModalProps) {
+export function InsightsModal({ 
+  visible, 
+  onClose, 
+  entityType, 
+  entityName,
+  overrideData 
+}: InsightsModalProps) {
   const { colors } = useTheme();
-  const { filteredData, topicStats, personStats, locationStats, companyStats, badVerdictStats, wordCloud, totalShows, filters } = useNewsDataContext();
+  const contextData = useNewsDataContext();
+  
+  // Используем либо переданные данные (для экрана сущности), либо данные из глобального контекста
+  const data = overrideData || contextData;
+  const { filteredData, totalShows, wordCloud } = data;
+  
+  // Для глобального контекста у нас есть готовые агрегаты, для overrideData (Entity) нужно брать из пропсов
+  const topicStats = (data as any).topicStats || [];
+  const personStats = (data as any).personStats || [];
+  const locationStats = (data as any).locationStats || [];
+  const companyStats = (data as any).companyStats || [];
+  const badVerdictStats = (data as any).badVerdictStats || (overrideData?.negativeRadarData ? 
+    overrideData.negativeRadarData.labels.map((l: string, i: number) => ({ topic: l, count: overrideData.negativeRadarData.counts[i] })) : []);
+  const filters = data.filters || {};
+
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -40,7 +72,7 @@ export function InsightsModal({ visible, onClose }: InsightsModalProps) {
       setLoading(true);
       fetchInsights();
     }
-  }, [visible]);
+  }, [visible, entityName, filters.dateRange]);
 
   const fetchInsights = async () => {
     try {
@@ -48,17 +80,36 @@ export function InsightsModal({ visible, onClose }: InsightsModalProps) {
       const periodStr = filters.dateRange ? `Last ${filters.dateRange} days` : 'All time';
 
       // Prepare analytics data for API
-      const payload = {
+      const payload: any = {
         period: periodStr,
         total_publications: filteredData.length,
         total_reach: totalShows,
-        top_topics: topicStats.slice(0, 5).map(t => t.topic),
-        top_persons: personStats.slice(0, 5).map(p => p.name),
-        top_locations: locationStats.slice(0, 5).map(l => l.name),
-        top_companies: companyStats.slice(0, 5).map(c => c.name),
-        negative_analysis: badVerdictStats.slice(0, 5).map(v => v.topic),
-        word_cloud: wordCloud.slice(0, 20).map(w => w.text),
+        word_cloud: wordCloud?.slice(0, 20).map((w: any) => w.text) || [],
       };
+
+      if (entityName) {
+        // Режим сущности
+        payload.entity = {
+          name: entityName,
+          type: entityType
+        };
+        payload.negative_analysis = badVerdictStats.map((v: any) => ({ topic: v.topic, count: v.count }));
+        payload.top_news = filteredData
+          .sort((a, b) => (b.shows || 0) - (a.shows || 0))
+          .slice(0, 5)
+          .map(item => ({
+            title: item.publication_title_name,
+            publisher: item.publisher_name,
+            shows: item.shows
+          }));
+      } else {
+        // Режим дашборда
+        payload.top_topics = topicStats.slice(0, 5).map((t: any) => t.topic);
+        payload.top_persons = personStats.slice(0, 5).map((p: any) => p.name);
+        payload.top_locations = locationStats.slice(0, 5).map((l: any) => l.name);
+        payload.top_companies = companyStats.slice(0, 5).map((c: any) => c.name);
+        payload.negative_analysis = badVerdictStats.slice(0, 5).map((v: any) => v.topic);
+      }
 
       const response = await fetch(API_URL, {
         method: 'POST',
