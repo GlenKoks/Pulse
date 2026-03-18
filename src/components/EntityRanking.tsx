@@ -4,6 +4,7 @@ import { EntityStats } from '../types';
 import { useTheme } from '../hooks/ThemeContext';
 import { formatNumber } from '../utils/dataProcessing';
 import { Spacing, BorderRadius } from '../utils/theme';
+import { EntitySearch } from './EntitySearch';
 
 interface EntityRankingProps {
   persons: EntityStats[];
@@ -43,6 +44,13 @@ export function EntityRanking({ persons, locations, companies, onEntityPress }: 
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* Search component */}
+      <EntitySearch 
+        type={tab} 
+        data={data} 
+        onSelect={(name) => onEntityPress(tab, name)} 
+      />
 
       {/* List */}
       <View style={styles.list}>
