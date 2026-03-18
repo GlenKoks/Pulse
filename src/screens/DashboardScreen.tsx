@@ -62,6 +62,19 @@ export function DashboardScreen() {
       formatNumber(c.totalShows),
     ]);
 
+    const topNewsList = filteredData
+      .sort((a, b) => (b.shows || 0) - (a.shows || 0))
+      .slice(0, 15)
+      .map((item, idx) => {
+        const title = item.publication_title_name || 'Без названия';
+        const shows = formatNumber(item.shows || 0);
+        const publisher = item.publisher_name || 'Неизвестный издатель';
+        return {
+          text: `${idx + 1}. "${title}" (${publisher}, охват: ${shows})`,
+          url: item.pub_url || ''
+        };
+      });
+
     const options: PdfExportOptions = {
       title: 'Дашборд — Аналитика новостей',
       sections: [
@@ -100,6 +113,10 @@ export function DashboardScreen() {
             headers: ['Компания', 'Упоминания', 'Охват'],
             rows: companiesTable,
           },
+        },
+        {
+          heading: 'Топ публикаций',
+          list: topNewsList,
         },
       ],
     };

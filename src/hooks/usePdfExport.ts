@@ -23,8 +23,8 @@ export interface PdfSection {
   heading: string;
   rows?: { label: string; value: string }[];
   text?: string;
-  table?: { headers: string[]; rows: string[][] };
-  list?: string[];
+  table?: { headers: string[]; rows: (string | { text: string; url: string })[][] };
+  list?: (string | { text: string; url: string })[];
 }
 
 function buildHtml(options: PdfExportOptions): string {
@@ -44,12 +44,22 @@ function buildHtml(options: PdfExportOptions): string {
           <tr>${s.table.headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
-          ${s.table.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+          ${s.table.rows.map(row => `<tr>${row.map(cell => {
+            if (typeof cell === 'object' && cell.url) {
+              return `<td><a href="${cell.url}" target="_blank">${cell.text}</a></td>`;
+            }
+            return `<td>${cell}</td>`;
+          }).join('')}</tr>`).join('')}
         </tbody>
       </table>`;
     } else if (s.list && s.list.length > 0) {
       content = `<ul class="item-list">
-        ${s.list.map(item => `<li>${item}</li>`).join('')}
+        ${s.list.map(item => {
+          if (typeof item === 'object' && item.url) {
+            return `<li><a href="${item.url}" target="_blank">${item.text}</a></li>`;
+          }
+          return `<li>${item}</li>`;
+        }).join('')}
       </ul>`;
     } else if (s.text) {
       content = `<p class="text">${s.text}</p>`;
@@ -153,6 +163,12 @@ function buildHtml(options: PdfExportOptions): string {
       line-height: 1.8;
     }
     ul.item-list li { margin-bottom: 6px; }
+    
+    a {
+      color: #6C63FF;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(108, 99, 255, 0.3);
+    }
     
     .text { 
       font-size: 13px; 

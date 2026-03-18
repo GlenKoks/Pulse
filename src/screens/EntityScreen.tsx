@@ -89,12 +89,15 @@ export function EntityScreen() {
     // Подготавливаем список топ-новостей
     const topNewsList = filteredData
       .sort((a, b) => (b.shows || 0) - (a.shows || 0))
-      .slice(0, 10)
+      .slice(0, 15)
       .map((item, idx) => {
         const title = item.publication_title_name || 'Без названия';
         const shows = formatNumber(item.shows || 0);
         const publisher = item.publisher_name || 'Неизвестный издатель';
-        return `${idx + 1}. "${title}" (${publisher}, охват: ${shows})`;
+        return {
+          text: `${idx + 1}. "${title}" (${publisher}, охват: ${shows})`,
+          url: item.pub_url || ''
+        };
       });
 
     // Подготавливаем таблицу негативных тематик
