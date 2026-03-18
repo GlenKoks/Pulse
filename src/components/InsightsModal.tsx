@@ -23,6 +23,7 @@ interface InsightsModalProps {
     negativeRadarData?: any;
     filters?: any;
   };
+  onJsonDebug?: (payload: any) => void;
 }
 
 const API_URL = 'https://pulseai-gcx9.onrender.com/insights';
@@ -40,7 +41,8 @@ export function InsightsModal({
   onClose, 
   entityType, 
   entityName,
-  overrideData 
+  overrideData,
+  onJsonDebug
 }: InsightsModalProps) {
   const { colors } = useTheme();
   const contextData = useNewsDataContext();
@@ -63,6 +65,7 @@ export function InsightsModal({
   const [copied, setCopied] = useState(false);
   const [insightsText, setInsightsText] = useState(STUB_TEXT);
   const [error, setError] = useState<string | null>(null);
+  const [lastPayload, setLastPayload] = useState<any>(null);
 
   useEffect(() => {
     if (visible) {
@@ -109,6 +112,12 @@ export function InsightsModal({
         payload.top_locations = locationStats.slice(0, 5).map((l: any) => l.name);
         payload.top_companies = companyStats.slice(0, 5).map((c: any) => c.name);
         payload.negative_analysis = badVerdictStats.slice(0, 5).map((v: any) => v.topic);
+      }
+
+      // Store payload for debug purposes
+      setLastPayload(payload);
+      if (onJsonDebug) {
+        onJsonDebug(payload);
       }
 
       const response = await fetch(API_URL, {

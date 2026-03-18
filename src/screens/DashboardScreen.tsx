@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import { ActivityIndicator } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar,
@@ -13,6 +13,7 @@ import { WordCloud } from '../components/WordCloud';
 import { EntityRanking } from '../components/EntityRanking';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
+import { JsonDebugModal } from '../components/JsonDebugModal';
 import WorldMapCard from '../components/WorldMapCard';
 import { NewsTopList } from '../components/NewsTopList';
 import { formatNumber, getPersonStats, getLocationStats, getCompanyStats } from '../utils/dataProcessing';
@@ -29,6 +30,8 @@ export function DashboardScreen() {
   } = useNewsDataContext();
 
   const [insightsVisible, setInsightsVisible] = useState(false);
+  const [jsonDebugVisible, setJsonDebugVisible] = useState(false);
+  const [debugPayload, setDebugPayload] = useState<any>(null);
   const [topLimit, setTopLimit] = useState(10);
   const scrollRef = useRef<ScrollViewType>(null);
   const { exportPdf, loading: pdfLoading } = usePdfExport();
@@ -224,6 +227,12 @@ export function DashboardScreen() {
           >
             <Text style={styles.insightsBtnText}>❆ Выводы</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.insightsBtn, { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border }]}
+            onPress={() => setJsonDebugVisible(true)}
+          >
+            <Text style={[styles.insightsBtnText, { color: colors.text }]}>{ } JSON</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -384,7 +393,19 @@ export function DashboardScreen() {
         </View>
       </ScrollView>
 
-      <InsightsModal visible={insightsVisible} onClose={() => setInsightsVisible(false)} />
+      <InsightsModal 
+        visible={insightsVisible} 
+        onClose={() => setInsightsVisible(false)}
+        onJsonDebug={(payload) => {
+          setDebugPayload(payload);
+          setJsonDebugVisible(true);
+        }}
+      />
+      <JsonDebugModal 
+        visible={jsonDebugVisible} 
+        onClose={() => setJsonDebugVisible(false)}
+        jsonData={debugPayload}
+      />
     </SafeAreaView>
   );
 }

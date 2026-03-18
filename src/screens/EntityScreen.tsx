@@ -12,6 +12,7 @@ import { WordCloud } from '../components/WordCloud';
 import { NewsTopList } from '../components/NewsTopList';
 import { DateFilter } from '../components/DateFilter';
 import { InsightsModal } from '../components/InsightsModal';
+import { JsonDebugModal } from '../components/JsonDebugModal';
 import NegativeRadarChart from '../components/NegativeRadarChart';
 import { WikipediaCard } from '../components/WikipediaCard';
 import {
@@ -36,6 +37,9 @@ const DEFAULT_FILTERS: Filters = {
   dateRange: null,
   selectedTopic: null,
   selectedGeo: null,
+  selectedPerson: null,
+  selectedLocation: null,
+  selectedCompany: null,
 };
 
 const ENTITY_LABEL: Record<string, string> = {
@@ -54,6 +58,8 @@ export function EntityScreen() {
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [insightsVisible, setInsightsVisible] = useState(false);
+  const [jsonDebugVisible, setJsonDebugVisible] = useState(false);
+  const [debugPayload, setDebugPayload] = useState<any>(null);
   const scrollRef = useRef<ScrollViewType>(null);
   const { exportPdf, loading: pdfLoading } = usePdfExport();
 
@@ -303,6 +309,15 @@ export function EntityScreen() {
           negativeRadarData,
           filters
         }}
+        onJsonDebug={(payload) => {
+          setDebugPayload(payload);
+          setJsonDebugVisible(true);
+        }}
+      />
+      <JsonDebugModal 
+        visible={jsonDebugVisible} 
+        onClose={() => setJsonDebugVisible(false)}
+        jsonData={debugPayload}
       />
     </SafeAreaView>
   );
