@@ -152,9 +152,9 @@ export function DashboardScreen() {
     setFilters(newFilters);
   };
 
-  const allPersons = useMemo(() => getPersonStats(allData).slice(0, 1000), [allData]);
-  const allLocations = useMemo(() => getLocationStats(allData).slice(0, 1000), [allData]);
-  const allCompanies = useMemo(() => getCompanyStats(allData).slice(0, 1000), [allData]);
+  const allPersons = useMemo(() => getPersonStats(allData, 0), [allData]);
+  const allLocations = useMemo(() => getLocationStats(allData, 0), [allData]);
+  const allCompanies = useMemo(() => getCompanyStats(allData, 0), [allData]);
 
   // Показываем loading экран
   if (loading) {

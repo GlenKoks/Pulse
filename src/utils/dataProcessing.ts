@@ -126,7 +126,7 @@ export function getDailyStats(data: NewsItem[]): DailyStats[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function getTopicStats(data: NewsItem[]): TopicStats[] {
+export function getTopicStats(data: NewsItem[], limit: number = 12): TopicStats[] {
   const map = new Map<string, { count: number; totalShows: number }>();
   for (const item of data) {
     for (const topic of parseList(item.topics_verdicts_list)) {
@@ -134,13 +134,13 @@ export function getTopicStats(data: NewsItem[]): TopicStats[] {
       map.set(topic, { count: e.count + 1, totalShows: e.totalShows + (item.shows || 0) });
     }
   }
-  return Array.from(map.entries())
+  const result = Array.from(map.entries())
     .map(([topic, stats]) => ({ topic, ...stats }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
+    .sort((a, b) => b.count - a.count);
+  return limit > 0 ? result.slice(0, limit) : result;
 }
 
-export function getPersonStats(data: NewsItem[]): PersonStats[] {
+export function getPersonStats(data: NewsItem[], limit: number = 20): PersonStats[] {
   const map = new Map<string, { count: number; totalShows: number }>();
   for (const item of data) {
     for (const person of parseList(item.persons)) {
@@ -150,13 +150,13 @@ export function getPersonStats(data: NewsItem[]): PersonStats[] {
       map.set(n, { count: e.count + 1, totalShows: e.totalShows + (item.shows || 0) });
     }
   }
-  return Array.from(map.entries())
+  const result = Array.from(map.entries())
     .map(([name, stats]) => ({ name, ...stats }))
-    .sort((a, b) => b.totalShows - a.totalShows)
-    .slice(0, 20);
+    .sort((a, b) => b.totalShows - a.totalShows);
+  return limit > 0 ? result.slice(0, limit) : result;
 }
 
-export function getLocationStats(data: NewsItem[]): EntityStats[] {
+export function getLocationStats(data: NewsItem[], limit: number = 20): EntityStats[] {
   const map = new Map<string, { count: number; totalShows: number }>();
   for (const item of data) {
     for (const loc of parseList(item.locations)) {
@@ -166,13 +166,13 @@ export function getLocationStats(data: NewsItem[]): EntityStats[] {
       map.set(n, { count: e.count + 1, totalShows: e.totalShows + (item.shows || 0) });
     }
   }
-  return Array.from(map.entries())
+  const result = Array.from(map.entries())
     .map(([name, stats]) => ({ name, ...stats }))
-    .sort((a, b) => b.totalShows - a.totalShows)
-    .slice(0, 20);
+    .sort((a, b) => b.totalShows - a.totalShows);
+  return limit > 0 ? result.slice(0, limit) : result;
 }
 
-export function getCompanyStats(data: NewsItem[]): EntityStats[] {
+export function getCompanyStats(data: NewsItem[], limit: number = 20): EntityStats[] {
   const map = new Map<string, { count: number; totalShows: number }>();
   for (const item of data) {
     for (const company of parseList(item.organizations)) {
@@ -182,10 +182,10 @@ export function getCompanyStats(data: NewsItem[]): EntityStats[] {
       map.set(n, { count: e.count + 1, totalShows: e.totalShows + (item.shows || 0) });
     }
   }
-  return Array.from(map.entries())
+  const result = Array.from(map.entries())
     .map(([name, stats]) => ({ name, ...stats }))
-    .sort((a, b) => b.totalShows - a.totalShows)
-    .slice(0, 20);
+    .sort((a, b) => b.totalShows - a.totalShows);
+  return limit > 0 ? result.slice(0, limit) : result;
 }
 
 export function getPublisherStats(data: NewsItem[]): PublisherStats[] {
