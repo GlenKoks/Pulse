@@ -55,6 +55,16 @@ export default function NegativeRadarChart({
           <RadarChart
             data={values}
             labels={labels}
+            labelConfig={{
+              stroke: mode === 'dark' ? '#FFFFFF' : '#333333',
+              fontWeight: 'bold',
+            }}
+            polygonConfig={{
+              stroke: '#f25e65',
+              strokeWidth: 2,
+              fill: '#f27278',
+              opacity: 0.6,
+            }}
           />
         ) : (
           <View style={styles.fallbackBox}>
